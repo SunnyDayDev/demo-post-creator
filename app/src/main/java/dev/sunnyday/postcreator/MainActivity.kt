@@ -12,8 +12,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        text.layout.getLineStart(1)
-
         updateCreatorSize()
     }
 
