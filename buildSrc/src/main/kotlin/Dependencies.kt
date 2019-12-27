@@ -9,9 +9,13 @@ object Kotlin {
     const val stdlibJdk8 = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$version"
 }
 
-object AndroidBuildTools {
+object Android {
 
-    const val classpath = "com.android.tools.build:gradle:3.6.0-rc01"
+    const val buildToolClassPath = "com.android.tools.build:gradle:3.6.0-rc01"
+    const val buildToolVersion = "29.0.2"
+
+    const val targetSdk = 29
+    const val minSdk = 21
 
 }
 
@@ -33,6 +37,12 @@ object Test {
 }
 
 object PostCreator {
+
+    object Core {
+
+        const val common = ":core:core-common"
+
+    }
 
     object Feature {
 
