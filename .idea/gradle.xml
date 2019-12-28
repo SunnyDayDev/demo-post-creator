@@ -15,6 +15,7 @@
             <option value="$PROJECT_DIR$/source/core" />
             <option value="$PROJECT_DIR$/source/core/core-common" />
             <option value="$PROJECT_DIR$/source/feature" />
+            <option value="$PROJECT_DIR$/source/feature/feature-backgroundswitcher" />
             <option value="$PROJECT_DIR$/source/feature/feature-postcreator" />
           </set>
         </option>

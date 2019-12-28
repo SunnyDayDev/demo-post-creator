@@ -5,6 +5,7 @@ include ':feature'
 project(':feature').projectDir = new File('source/feature')
 
 include ':feature:feature-postcreator'
+include ':feature:feature-backgroundswitcher'
 
 include ':core'
 project(':core').projectDir = new File('source/core')

@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
+    tools:parentTag="android.widget.FrameLayout">
 
     <EditText
         android:id="@+id/textInput"
@@ -18,13 +18,9 @@
         android:background="@null"
         android:hint="@string/postcreator__prompt__input_hint"
         android:textSize="24sp"
+        app:autoSizeTextType="uniform"
+        app:autoSizeMinTextSize="12sp"
         android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constrainedWidth="true"
-        app:layout_constrainedHeight="true"
         android:importantForAutofill="no" />
 
 </merge>
