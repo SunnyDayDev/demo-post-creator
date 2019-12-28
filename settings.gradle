@@ -5,3 +5,8 @@ include ':feature'
 project(':feature').projectDir = new File('source/feature')
 
 include ':feature:feature-postcreator'
+
+include ':core'
+project(':core').projectDir = new File('source/core')
+
+include ':core:core-common'
