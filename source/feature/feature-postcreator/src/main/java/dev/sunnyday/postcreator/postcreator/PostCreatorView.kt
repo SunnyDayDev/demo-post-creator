@@ -35,12 +35,16 @@ class PostCreatorView @JvmOverloads constructor(
         }
     }
 
+    fun setTextDecorators(decorators: List<TextDecorator>) {
+        textDecorator.setTextDecorators(decorators)
+    }
+
     fun addTextDecorator(decorator: TextDecorator) {
-        textDecorator.decorators.add(decorator)
+        textDecorator.addTextDecorator(decorator)
     }
 
     fun removeTextDecorator(decorator: TextDecorator) {
-        textDecorator.decorators.remove(decorator)
+        textDecorator.removeTextDecorator(decorator)
     }
 
     // TODO: https://github.com/SunnyDayDev/demo-post-creator/projects/1#card-31003220
@@ -77,10 +81,9 @@ class PostCreatorView @JvmOverloads constructor(
         context: Context, attrs: AttributeSet?  = null, defStyle: Int = 0
     ) : View(context, attrs, defStyle) {
 
-        val decorators = mutableSetOf<TextDecorator>()
-
         private var lines: List<TextDecorator.Line> = emptyList()
 
+        private val decorators = mutableSetOf<TextDecorator>()
         private var decoration: Bitmap? = null
 
         override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
@@ -100,6 +103,22 @@ class PostCreatorView @JvmOverloads constructor(
         fun decorate(lines: List<TextDecorator.Line>) {
             this.lines = lines
 
+            invalidateDecoration()
+        }
+
+        fun setTextDecorators(decorators: List<TextDecorator>) {
+            this.decorators.clear()
+            this.decorators.addAll(decorators)
+            invalidateDecoration()
+        }
+
+        fun addTextDecorator(decorator: TextDecorator) {
+            decorators.add(decorator)
+            invalidateDecoration()
+        }
+
+        fun removeTextDecorator(decorator: TextDecorator) {
+            decorators.remove(decorator)
             invalidateDecoration()
         }
 

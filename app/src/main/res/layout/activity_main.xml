@@ -8,10 +8,30 @@
     android:orientation="vertical">
 
     <!-- Header -->
-    <View
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:background="?colorPrimary"/>
+        android:layout_height="48dp">
+
+        <com.google.android.material.button.MaterialButton
+            style="@style/AppWidget.ToolbarButton"
+            android:id="@+id/switchTextStyleButton"
+            android:layout_width="48dp"
+            android:layout_height="58dp"
+            app:icon="@android:drawable/ic_menu_edit"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app__prompt__new_record"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <ScrollView
         android:layout_width="match_parent"

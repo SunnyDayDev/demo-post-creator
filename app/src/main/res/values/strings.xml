@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">PostCreator</string>
+    <string name="app__prompt__new_record">Новая запись</string>
 </resources>
