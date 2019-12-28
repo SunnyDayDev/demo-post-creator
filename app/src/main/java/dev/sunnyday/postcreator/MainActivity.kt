@@ -1,5 +1,6 @@
 package dev.sunnyday.postcreator
 
+import android.graphics.Color
 import android.graphics.RectF
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -18,6 +19,7 @@ class MainActivity : AppCompatActivity() {
 
         updateCreatorSize()
         setupTextDecorator()
+        creatorView.textColor = Color.WHITE
     }
 
     private fun updateCreatorSize() {
