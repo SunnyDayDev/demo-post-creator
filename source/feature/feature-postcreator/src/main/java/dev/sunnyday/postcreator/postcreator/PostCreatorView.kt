@@ -5,6 +5,7 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.FrameLayout
 import androidx.annotation.ColorInt
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.postDelayed
@@ -14,7 +15,7 @@ import kotlinx.android.synthetic.main.postcreator__view.view.*
 
 class PostCreatorView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet?  = null, defStyle: Int = 0
-) : ConstraintLayout(context, attrs, defStyle) {
+) : FrameLayout(context, attrs, defStyle) {
 
     @get:ColorInt
     var textColor: Int

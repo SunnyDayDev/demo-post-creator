@@ -23,10 +23,10 @@ object AndroidX {
 
     const val appCompat = "androidx.appcompat:appcompat:1.1.0"
     const val coreKtx = "androidx.core:core-ktx:1.1.0"
-
     const val constraintLayout = "androidx.constraintlayout:constraintlayout:1.1.3"
-
     const val material = "com.google.android.material:material:1.1.0-rc01"
+    const val recyclerView = "androidx.recyclerview:recyclerview:1.1.0"
+    const val card = "androidx.cardview:cardview:1.0.0"
 
 }
 
@@ -49,6 +49,7 @@ object PostCreator {
     object Feature {
 
         const val postCreator = ":feature:feature-postcreator"
+        const val backgroundSwitcher = ":feature:feature-backgroundswitcher"
 
     }
 

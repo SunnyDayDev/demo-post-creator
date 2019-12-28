@@ -10,12 +10,10 @@ import dev.sunnyday.postcreator.postcreator.PostCreatorView
 import dev.sunnyday.postcreator.postcreator.decorations.RoundedColorFillDecorator
 import dev.sunnyday.postcreator.postcreator.decorations.TextDecorator
 
-class TextStyleSwitcher(private val creatorView: PostCreatorView) {
+class TextStyleSwitcher(private val context: Context) {
 
     private val textStyles: List<DecoratedTextStyle>
     private var activeTextStyleIndex = -1
-
-    private val context: Context get() = creatorView.context
 
     init {
         textStyles = listOf(
@@ -55,7 +53,7 @@ class TextStyleSwitcher(private val creatorView: PostCreatorView) {
             padding = decoratorPadding)
     }
 
-    fun applyNextStyle() {
+    fun applyNextStyle(creatorView: PostCreatorView) {
         activeTextStyleIndex = (activeTextStyleIndex + 1) % textStyles.size
         val activeStyle = textStyles.getOrNull(activeTextStyleIndex) ?: return
         creatorView.textColor = activeStyle.textColor
