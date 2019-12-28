@@ -5,6 +5,8 @@ import android.graphics.Rect
 
 interface TextDecorator {
 
-    fun decorateText(canvas: Canvas, lines: List<String>, linesBounds: List<Rect>)
+    fun decorateText(canvas: Canvas, lines: List<Line>)
+
+    data class Line(val text: String, val bounds: Rect)
 
 }
