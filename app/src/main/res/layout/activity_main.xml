@@ -8,10 +8,37 @@
     android:orientation="vertical">
 
     <!-- Header -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp">
+
+        <com.google.android.material.button.MaterialButton
+            style="@style/AppWidget.ToolbarButton"
+            android:id="@+id/switchTextStyleButton"
+            android:layout_width="48dp"
+            android:layout_height="58dp"
+            app:icon="@drawable/ic_toolbar_font"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app__prompt__new_record"
+            android:textColor="@color/textDark"
+            android:textSize="16sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
     <View
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:background="?colorPrimary"/>
+        android:layout_height="1dp"
+        android:background="@color/divider"/>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -30,7 +57,6 @@
                 android:id="@+id/creatorView"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:background="@android:color/holo_green_light"
                 app:layout_constraintDimensionRatio="360:328"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
@@ -40,10 +66,14 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider"/>
+
     <!-- Footer -->
     <View
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:background="?colorPrimaryDark"/>
+        android:layout_height="48dp"/>
 
 </LinearLayout>

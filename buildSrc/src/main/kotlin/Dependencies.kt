@@ -26,6 +26,8 @@ object AndroidX {
 
     const val constraintLayout = "androidx.constraintlayout:constraintlayout:1.1.3"
 
+    const val material = "com.google.android.material:material:1.1.0-rc01"
+
 }
 
 object Test {
