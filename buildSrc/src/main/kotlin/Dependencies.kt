@@ -30,6 +30,15 @@ object AndroidX {
 
 }
 
+object Glide {
+
+    private const val version = "4.10.0"
+
+    const val api = "com.github.bumptech.glide:glide:$version"
+    const val compiler = "com.github.bumptech.glide:compiler:$version"
+
+}
+
 object Test {
 
     const val junit = "junit:junit:4.12"

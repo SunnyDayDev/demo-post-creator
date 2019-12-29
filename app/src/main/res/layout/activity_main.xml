@@ -33,6 +33,16 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
 
+        <com.google.android.material.button.MaterialButton
+            style="@style/AppWidget.ToolbarButton"
+            android:id="@+id/stickersButton"
+            android:layout_width="48dp"
+            android:layout_height="58dp"
+            app:icon="@drawable/ic_toolbar_sticker"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <View

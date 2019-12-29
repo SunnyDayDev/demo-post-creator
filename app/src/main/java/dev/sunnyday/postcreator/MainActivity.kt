@@ -3,9 +3,11 @@ package dev.sunnyday.postcreator
 import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import androidx.core.view.updateLayoutParams
 import dev.sunnyday.postcreator.backgroundswitcher.Background
 import dev.sunnyday.postcreator.backgroundswitcher.BackgroundSwitcherToolbarListener
+import dev.sunnyday.postcreator.stickersboard.StickersBoard
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlin.math.min
 
@@ -23,6 +25,7 @@ class MainActivity : AppCompatActivity() {
 
         setupTextStyleSwitcher()
         setupBackgroundSwitcher()
+        setupStickers()
     }
 
     private fun updateCreatorSize() {
@@ -67,6 +70,14 @@ class MainActivity : AppCompatActivity() {
             }
 
         })
+    }
+
+    private fun setupStickers() {
+        stickersButton.setOnClickListener {
+            StickersBoard.show(this) {
+                Log.d(MainActivity::class.java.simpleName, "Sticker selected: $it")
+            }
+        }
     }
 
 }

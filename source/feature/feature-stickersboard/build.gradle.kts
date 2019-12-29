@@ -2,6 +2,7 @@ plugins {
     id("com.android.library")
     id("kotlin-android")
     id("kotlin-android-extensions")
+    kotlin("kapt")
 }
 
 android {
@@ -32,8 +33,12 @@ dependencies {
     implementation(AndroidX.appCompat)
     implementation(AndroidX.coreKtx)
     implementation(AndroidX.recyclerView)
-    implementation(AndroidX.card)
     implementation(AndroidX.material)
+    implementation(AndroidX.constraintLayout)
+    implementation(Glide.api)
+    kapt(Glide.compiler)
+
+    implementation(project(PostCreator.Core.common))
 
     testImplementation(Test.junit)
     androidTestImplementation(Test.junitExt)
