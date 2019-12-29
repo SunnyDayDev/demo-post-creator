@@ -4,7 +4,6 @@ import android.graphics.Color
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import androidx.core.view.updateLayoutParams
 import dev.sunnyday.postcreator.backgroundswitcher.Background
 import dev.sunnyday.postcreator.backgroundswitcher.BackgroundSwitcherToolbarListener
@@ -81,7 +80,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             StickersBoard.show(this, stickers) {
-                Log.d(MainActivity::class.java.simpleName, "Sticker selected: $it")
+                creatorView.addImage(it.uri)
             }
         }
     }
