@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.core.view.updateLayoutParams
 import dev.sunnyday.postcreator.backgroundswitcher.Background
 import dev.sunnyday.postcreator.backgroundswitcher.BackgroundSwitcherToolbarListener
+import dev.sunnyday.postcreator.core.common.android.Dimen
 import dev.sunnyday.postcreator.stickersboard.Sticker
 import dev.sunnyday.postcreator.stickersboard.StickersBoard
 import kotlinx.android.synthetic.main.activity_main.*
@@ -61,16 +62,23 @@ class MainActivity : AppCompatActivity() {
             Background.Gradient(0xFFFFBA00.toInt(), 0xFF27590B.toInt()),
             Background.Gradient(0xFF4F0004.toInt(), 0xFF29404F.toInt()))
 
-        backgroundSwitcher.selectedPosition = 0
-
         backgroundSwitcher.addListener(object : BackgroundSwitcherToolbarListener {
 
             override fun onBackgroundSelected(background: Background) {
                 creatorView.background =
                     Background.getDrawable(this@MainActivity, background)
+
+                if (background is Background.Color && background.color == Color.WHITE) {
+                    val actionsBorderWidth = Dimen.dp(2, this@MainActivity).toInt()
+                    creatorView.setActionsBorderWidth(actionsBorderWidth)
+                } else {
+                    creatorView.setActionsBorderWidth(0)
+                }
             }
 
         })
+
+        backgroundSwitcher.selectedPosition = 0
     }
 
     private fun setupStickers() {

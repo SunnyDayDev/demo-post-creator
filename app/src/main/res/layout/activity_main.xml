@@ -67,6 +67,8 @@
                 android:id="@+id/creatorView"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
+                app:actionsColor="?colorPrimary"
+                app:actionsBorderWidth="2dp"
                 app:layout_constraintDimensionRatio="360:328"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"

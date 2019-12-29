@@ -2,7 +2,10 @@ package dev.sunnyday.postcreator.postcreator
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.ColorStateList
+import android.content.res.TypedArray
 import android.graphics.*
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.util.AttributeSet
 import android.view.LayoutInflater
@@ -11,6 +14,9 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.annotation.ColorInt
+import androidx.annotation.Dimension
+import androidx.core.content.res.getColorStateListOrThrow
+import androidx.core.view.isVisible
 import androidx.core.view.postDelayed
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.addTextChangedListener
@@ -32,6 +38,9 @@ class PostCreatorView @JvmOverloads constructor(
         get() = textInput.currentTextColor
         set(@ColorInt value) { textInput.setTextColor(value) }
 
+    private var actionsColors: ColorStateList = ColorStateList.valueOf(Color.BLACK)
+    private var actionsBorderWidth: Int = Dimen.dp(2, context).toInt()
+
     private val images = mutableListOf<ImageView>()
 
     private var activeImageTouchTracker: ImageTouchTracker? = null
@@ -39,15 +48,50 @@ class PostCreatorView @JvmOverloads constructor(
     private val textDecorator = TextDecoratorView(context)
 
     init {
-        addView(textDecorator)
-
         val inflater = LayoutInflater.from(context)
         inflater.inflate(R.layout.postcreator__view, this, true)
+        addView(textDecorator, 0)
 
+        deleteButton.isVisible = false
+
+        attrs?.let(this::applyAttributes)
+        initTextDecorationUpdating()
+    }
+
+    private fun applyAttributes(attrs: AttributeSet) {
+        val attributes: TypedArray = context.theme
+            .obtainStyledAttributes(attrs, R.styleable.PostCreatorView, 0, 0)
+
+        attributes.getColorStateList(R.styleable.PostCreatorView_actionsColor)
+            ?.let(this::setActionsColor)
+
+        attributes.getDimensionPixelSize(R.styleable.PostCreatorView_actionsBorderWidth, -1)
+            .takeIf { it != -1 }
+            ?.let(this::setActionsBorderWidth)
+
+        attributes.recycle()
+    }
+
+    private fun initTextDecorationUpdating() {
         textInput.addTextChangedListener {
             // TODO: https://github.com/SunnyDayDev/demo-post-creator/projects/1#card-31003227
             postDelayed(10, this::decorateText)
         }
+    }
+
+    fun setActionsColor(colors: ColorStateList) {
+        actionsColors = colors
+
+        deleteButton.imageTintList = colors
+        val background = (deleteButton.background as GradientDrawable)
+        background.setStroke(actionsBorderWidth, colors)
+    }
+
+    fun setActionsBorderWidth(@Dimension width: Int) {
+        actionsBorderWidth = width
+
+        val background = (deleteButton.background as GradientDrawable)
+        background.setStroke(width, actionsColors)
     }
 
     fun setTextDecorators(decorators: List<TextDecorator>) {
@@ -78,7 +122,10 @@ class PostCreatorView @JvmOverloads constructor(
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val touchTracker = activeImageTouchTracker ?: findTouchTracker(event)
-            .also(this::activeImageTouchTracker::set)
+            ?.also {
+                deleteButton.isVisible = true
+                activeImageTouchTracker = it
+            }
 
         return touchTracker?.onTouchEvent(event) ?: super.onTouchEvent(event)
     }
@@ -87,6 +134,7 @@ class PostCreatorView @JvmOverloads constructor(
         val image = findImageUnderTouch(event) ?: return null
         return ImageTouchTracker(image) {
             activeImageTouchTracker = null
+            deleteButton.isVisible = false
         }
     }
 
