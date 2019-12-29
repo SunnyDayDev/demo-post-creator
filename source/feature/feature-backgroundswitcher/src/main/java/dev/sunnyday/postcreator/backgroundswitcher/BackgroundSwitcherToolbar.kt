@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.FrameLayout
-import dev.sunnyday.postcreator.postcreator.R
 import kotlinx.android.synthetic.main.backgroundswitcher__toolbar.view.*
 
 class BackgroundSwitcherToolbar @JvmOverloads constructor(

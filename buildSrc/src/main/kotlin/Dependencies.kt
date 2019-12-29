@@ -50,6 +50,7 @@ object PostCreator {
 
         const val postCreator = ":feature:feature-postcreator"
         const val backgroundSwitcher = ":feature:feature-backgroundswitcher"
+        const val stickersBoard = ":feature:feature-stickersboard"
 
     }
 
