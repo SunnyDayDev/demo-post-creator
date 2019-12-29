@@ -1,21 +1,27 @@
 package dev.sunnyday.postcreator.postcreator
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
 import android.net.Uri
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.annotation.ColorInt
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.postDelayed
+import androidx.core.view.updateLayoutParams
 import androidx.core.widget.addTextChangedListener
 import com.bumptech.glide.Glide
 import dev.sunnyday.postcreator.core.common.android.Dimen
 import dev.sunnyday.postcreator.postcreator.decorations.TextDecorator
 import kotlinx.android.synthetic.main.postcreator__view.view.*
+import kotlin.math.atan2
+import kotlin.math.pow
+import kotlin.math.sqrt
+
 
 class PostCreatorView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet?  = null, defStyle: Int = 0
@@ -25,6 +31,10 @@ class PostCreatorView @JvmOverloads constructor(
     var textColor: Int
         get() = textInput.currentTextColor
         set(@ColorInt value) { textInput.setTextColor(value) }
+
+    private val images = mutableListOf<ImageView>()
+
+    private var activeImageTouchTracker: ImageTouchTracker? = null
 
     private val textDecorator = TextDecoratorView(context)
 
@@ -54,6 +64,7 @@ class PostCreatorView @JvmOverloads constructor(
 
     fun addImage(uri: Uri) {
         val image = ImageView(context)
+        images.add(0, image)
         addView(image, childCount - 2)
 
         val size = Dimen.dp(92, context).toInt()
@@ -62,6 +73,32 @@ class PostCreatorView @JvmOverloads constructor(
         Glide.with(context)
             .load(uri)
             .into(image)
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        val touchTracker = activeImageTouchTracker ?: findTouchTracker(event)
+            .also(this::activeImageTouchTracker::set)
+
+        return touchTracker?.onTouchEvent(event) ?: super.onTouchEvent(event)
+    }
+
+    private fun findTouchTracker(event: MotionEvent): ImageTouchTracker? {
+        val image = findImageUnderTouch(event) ?: return null
+        return ImageTouchTracker(image) {
+            activeImageTouchTracker = null
+        }
+    }
+
+    private fun findImageUnderTouch(event: MotionEvent): ImageView? {
+        val rect = Rect()
+        val x = event.rawX.toInt()
+        val y = event.rawY.toInt()
+
+        return images.firstOrNull {
+            it.getGlobalVisibleRect(rect)
+            rect.contains(x, y)
+        }
     }
 
     // TODO: https://github.com/SunnyDayDev/demo-post-creator/projects/1#card-31003220
@@ -169,6 +206,160 @@ class PostCreatorView @JvmOverloads constructor(
         private fun removeDecoration() {
             decoration?.recycle()
             decoration = null
+        }
+
+    }
+
+    private class ImageTouchTracker(val image: ImageView, private val onComplete: () -> Unit) {
+
+        private var anchorPoint: Point? = null
+        private var anchorSize: Int? = null
+        private var anchorAngle: Float? = null
+
+        private var firstPointerIndex: Int? = null
+        private var firstStartPoint: PointF? = null
+        private var firstActualPoint: PointF? = null
+
+        private var secondPointerIndex: Int? = null
+        private var secondTouchPoint: PointF? = null
+        private var secondActualPoint: PointF? = null
+
+        private var startSize: Int? = null
+        private var startDistance: Float? = null
+        private var startAngle: Float? = null
+
+        fun onTouchEvent(event: MotionEvent): Boolean {
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    firstPointerIndex = event.actionIndex
+
+                    val touchPoint = getTouchPoint(event.actionIndex, event)
+                    firstStartPoint = touchPoint
+                    firstActualPoint = touchPoint
+
+                    anchorSize = image.width
+                    anchorPoint = (image.layoutParams as LayoutParams).let {
+                        Point(it.leftMargin, it.topMargin)
+                    }
+                }
+                MotionEvent.ACTION_POINTER_DOWN -> {
+                    if(secondPointerIndex == null) {
+                        secondPointerIndex = event.actionIndex
+
+                        val touchPoint = getTouchPoint(event.actionIndex, event)
+                        secondTouchPoint = touchPoint
+                        secondActualPoint = touchPoint
+
+                        startSize = image.width
+
+                        val firstTouchPoint = firstActualPoint ?: return true
+                        startDistance = getDistanceBetweenPoints(firstTouchPoint, touchPoint)
+                        startAngle = getAngleBetweenPoints(firstTouchPoint, touchPoint)
+                        anchorAngle = image.rotation
+                    } else {
+                        return true
+                    }
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    val firstPointerIndex = firstPointerIndex
+                    if (firstPointerIndex != null) {
+                        firstActualPoint = getTouchPoint(firstPointerIndex, event)
+                    }
+
+                    val secondPointerIndex = secondPointerIndex
+                    if (secondPointerIndex != null) {
+                        secondActualPoint = getTouchPoint(secondPointerIndex, event)
+                    }
+
+                    onMoved()
+                }
+
+                MotionEvent.ACTION_UP,
+                MotionEvent.ACTION_CANCEL -> {
+                    firstPointerIndex = null
+                    firstStartPoint = null
+                    firstActualPoint = null
+                    secondPointerIndex = null
+                    secondTouchPoint = null
+                    secondActualPoint = null
+                    startDistance = null
+
+                    onComplete()
+                    return false
+                }
+                MotionEvent.ACTION_POINTER_UP -> {
+                    secondPointerIndex = null
+                    secondTouchPoint = null
+                    secondActualPoint = null
+                    startDistance = null
+                }
+            }
+
+            return true
+        }
+
+        private fun onMoved() {
+            val anchorPoint = anchorPoint ?:return
+            val firstActualPoint = firstActualPoint ?:return
+            val firstStartPoint = firstStartPoint ?:return
+            val anchorSize = anchorSize ?: return
+
+            var size = image.width
+
+            val secondActualPoint = secondActualPoint
+
+            if (secondActualPoint != null) {
+
+                val startDistance = startDistance
+                val startSize = startSize
+
+                if (startSize != null && startDistance != null) {
+                    val actualDistance = getDistanceBetweenPoints(firstActualPoint, secondActualPoint)
+                    size = (startSize * actualDistance / startDistance).toInt()
+                }
+
+                val startAngle = startAngle
+                val anchorAngle = anchorAngle
+                if (startAngle != null && anchorAngle != null) {
+                    val angle = getAngleBetweenPoints(firstActualPoint, secondActualPoint)
+                    image.rotation = anchorAngle + angle - startAngle
+                }
+
+            }
+
+            val sizeShift = (size - anchorSize) / 2
+
+            image.updateLayoutParams<LayoutParams> {
+                width = size
+                height = size
+
+                setMargins(
+                    anchorPoint.x + (firstActualPoint.x - firstStartPoint.x).toInt() - sizeShift,
+                    anchorPoint.y + (firstActualPoint.y - firstStartPoint.y).toInt() - sizeShift,
+                    0, 0)
+
+            }
+
+        }
+
+        private fun getTouchPoint(index: Int, event: MotionEvent): PointF =
+            PointF(
+                event.getX(index),
+                event.getY(index))
+
+        private fun getDistanceBetweenPoints(f: PointF, s: PointF): Float =
+            sqrt((s.x - f.x).pow(2) + (s.y - f.y).pow(2))
+
+        private fun getAngleBetweenPoints(f: PointF, s: PointF): Float {
+            val atan = atan2((f.y - s.y).toDouble(), (f.x - s.x).toDouble())
+            val angle = Math.toDegrees(atan).toFloat()
+
+            return if (angle < 0) {
+                angle + 360f
+            } else {
+                angle
+            }
         }
 
     }
