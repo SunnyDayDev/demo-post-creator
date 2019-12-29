@@ -117,7 +117,7 @@ class PostCreatorView @JvmOverloads constructor(
     fun addImage(uri: Uri) {
         val image = ImageView(context)
         images.add(0, image)
-        addView(image, childCount - 2)
+        addView(image, indexOfChild(textDecorator))
 
         val size = Dimen.dp(92, context).toInt()
         image.layoutParams = LayoutParams(size, size)
