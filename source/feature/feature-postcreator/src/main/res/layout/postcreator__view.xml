@@ -4,7 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:parentTag="android.widget.FrameLayout">
+    tools:parentTag="android.widget.FrameLayout"
+    tools:background="#aaa">
 
     <EditText
         android:id="@+id/textInput"
@@ -22,5 +23,16 @@
         app:autoSizeMinTextSize="12sp"
         android:textStyle="bold"
         android:importantForAutofill="no" />
+
+    <ImageView
+        android:id="@+id/deleteButton"
+        android:src="@drawable/postcreator__ic__fab_trash"
+        android:scaleType="center"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:tint="#000"
+        android:background="@drawable/postcreator__bg__fab_trash"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="48dp"/>
 
 </merge>

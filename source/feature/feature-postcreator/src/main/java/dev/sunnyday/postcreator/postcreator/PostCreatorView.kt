@@ -2,7 +2,10 @@ package dev.sunnyday.postcreator.postcreator
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.ColorStateList
+import android.content.res.TypedArray
 import android.graphics.*
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.util.AttributeSet
 import android.view.LayoutInflater
@@ -11,6 +14,11 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.annotation.ColorInt
+import androidx.annotation.Dimension
+import androidx.core.graphics.contains
+import androidx.core.graphics.toPoint
+import androidx.core.view.isVisible
+import androidx.core.view.marginBottom
 import androidx.core.view.postDelayed
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.addTextChangedListener
@@ -32,22 +40,66 @@ class PostCreatorView @JvmOverloads constructor(
         get() = textInput.currentTextColor
         set(@ColorInt value) { textInput.setTextColor(value) }
 
+    private var actionsColors: ColorStateList = ColorStateList.valueOf(Color.BLACK)
+    private var actionsBorderWidth: Int = Dimen.dp(2, context).toInt()
+
     private val images = mutableListOf<ImageView>()
 
     private var activeImageTouchTracker: ImageTouchTracker? = null
 
     private val textDecorator = TextDecoratorView(context)
 
-    init {
-        addView(textDecorator)
+    private var deleteButtonCenterPoint: Point = Point(0, 0)
+    private val deleteActionRadius = Dimen.dp(36, context)
+    private var isDeleteActionActive = false
 
+    init {
         val inflater = LayoutInflater.from(context)
         inflater.inflate(R.layout.postcreator__view, this, true)
+        addView(textDecorator, 0)
 
+        deleteButton.isVisible = false
+
+        attrs?.let(this::applyAttributes)
+        initTextDecorationUpdating()
+    }
+
+    private fun applyAttributes(attrs: AttributeSet) {
+        val attributes: TypedArray = context.theme
+            .obtainStyledAttributes(attrs, R.styleable.PostCreatorView, 0, 0)
+
+        try {
+            attributes.getColorStateList(R.styleable.PostCreatorView_actionsColor)
+                ?.let(this::setActionsColor)
+
+            attributes.getDimensionPixelSize(R.styleable.PostCreatorView_actionsBorderWidth, -1)
+                .takeIf { it != -1 }
+                ?.let(this::setActionsBorderWidth)
+        } finally {
+            attributes.recycle()
+        }
+    }
+
+    private fun initTextDecorationUpdating() {
         textInput.addTextChangedListener {
             // TODO: https://github.com/SunnyDayDev/demo-post-creator/projects/1#card-31003227
             postDelayed(10, this::decorateText)
         }
+    }
+
+    fun setActionsColor(colors: ColorStateList) {
+        actionsColors = colors
+
+        deleteButton.imageTintList = colors
+        val background = (deleteButton.background as GradientDrawable)
+        background.setStroke(actionsBorderWidth, colors)
+    }
+
+    fun setActionsBorderWidth(@Dimension width: Int) {
+        actionsBorderWidth = width
+
+        val background = (deleteButton.background as GradientDrawable)
+        background.setStroke(width, actionsColors)
     }
 
     fun setTextDecorators(decorators: List<TextDecorator>) {
@@ -75,18 +127,70 @@ class PostCreatorView @JvmOverloads constructor(
             .into(image)
     }
 
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+
+        deleteButtonCenterPoint.set(
+            deleteButton.left + deleteButton.width / 2,
+            deleteButton.top + deleteButton.height / 2)
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val touchTracker = activeImageTouchTracker ?: findTouchTracker(event)
-            .also(this::activeImageTouchTracker::set)
+            ?.also(this::activeImageTouchTracker::set)
 
         return touchTracker?.onTouchEvent(event) ?: super.onTouchEvent(event)
     }
 
     private fun findTouchTracker(event: MotionEvent): ImageTouchTracker? {
         val image = findImageUnderTouch(event) ?: return null
-        return ImageTouchTracker(image) {
-            activeImageTouchTracker = null
+        return ImageTouchTracker(image, this::onImageMoved, this::onImageInteractionCompleted)
+    }
+
+    private fun onImageMoved(touchPoint: Point, image: ImageView) {
+        setDeleteActiveActive(isDeleteAction(touchPoint))
+
+        deleteButton.isVisible = true
+    }
+
+    private fun isDeleteAction(touchPoint: Point): Boolean {
+        val distanceToDelete = getDistanceBetweenPoints(deleteButtonCenterPoint, touchPoint)
+        return distanceToDelete <= deleteActionRadius
+    }
+
+    private fun setDeleteActiveActive(isActive: Boolean) {
+        if (isDeleteActionActive == isActive) return
+        isDeleteActionActive = isActive
+
+        if (isActive) {
+            val size =  Dimen.dp(56, context).toInt()
+            deleteButton.setImageResource(R.drawable.postcreator__ic__fab_trash_released)
+            updateDeleteButtonSize(size)
+        } else {
+            val size =  Dimen.dp(48, context).toInt()
+            deleteButton.setImageResource(R.drawable.postcreator__ic__fab_trash)
+            updateDeleteButtonSize(size)
+        }
+    }
+
+    private fun updateDeleteButtonSize(size: Int) {
+        if (deleteButton.width == size) return
+
+        deleteButton.updateLayoutParams<LayoutParams> {
+            width = size
+            height = size
+            bottomMargin = this@PostCreatorView.height - deleteButtonCenterPoint.y - size / 2
+        }
+    }
+
+    private fun onImageInteractionCompleted(touchPoint: Point, image: ImageView) {
+        activeImageTouchTracker = null
+        deleteButton.isVisible = false
+
+        if (isDeleteAction(touchPoint)) {
+            images.remove(image)
+            removeView(image)
         }
     }
 
@@ -210,7 +314,11 @@ class PostCreatorView @JvmOverloads constructor(
 
     }
 
-    private class ImageTouchTracker(val image: ImageView, private val onComplete: () -> Unit) {
+    private class ImageTouchTracker(
+        private val image: ImageView,
+        onMoved: (Point, ImageView) -> Unit,
+        onComplete: (Point, ImageView) -> Unit
+    ) {
 
         private var anchorPoint: Point? = null
         private var anchorSize: Int? = null
@@ -227,6 +335,9 @@ class PostCreatorView @JvmOverloads constructor(
         private var startSize: Int? = null
         private var startDistance: Float? = null
         private var startAngle: Float? = null
+
+        private val onMovedCallback = onMoved
+        private val onCompleteCallback = onComplete
 
         fun onTouchEvent(event: MotionEvent): Boolean {
             when (event.actionMasked) {
@@ -277,6 +388,10 @@ class PostCreatorView @JvmOverloads constructor(
 
                 MotionEvent.ACTION_UP,
                 MotionEvent.ACTION_CANCEL -> {
+                    if (firstActualPoint != null) {
+                        onCompleteCallback(firstActualPoint!!.toPoint(), image)
+                    }
+
                     firstPointerIndex = null
                     firstStartPoint = null
                     firstActualPoint = null
@@ -284,8 +399,6 @@ class PostCreatorView @JvmOverloads constructor(
                     secondTouchPoint = null
                     secondActualPoint = null
                     startDistance = null
-
-                    onComplete()
                     return false
                 }
                 MotionEvent.ACTION_POINTER_UP -> {
@@ -341,15 +454,13 @@ class PostCreatorView @JvmOverloads constructor(
 
             }
 
+            onMovedCallback(firstActualPoint.toPoint(), image)
         }
 
         private fun getTouchPoint(index: Int, event: MotionEvent): PointF =
             PointF(
                 event.getX(index),
                 event.getY(index))
-
-        private fun getDistanceBetweenPoints(f: PointF, s: PointF): Float =
-            sqrt((s.x - f.x).pow(2) + (s.y - f.y).pow(2))
 
         private fun getAngleBetweenPoints(f: PointF, s: PointF): Float {
             val atan = atan2((f.y - s.y).toDouble(), (f.x - s.x).toDouble())
@@ -361,6 +472,16 @@ class PostCreatorView @JvmOverloads constructor(
                 angle
             }
         }
+
+    }
+
+    companion object {
+
+        private fun getDistanceBetweenPoints(f: PointF, s: PointF): Float =
+            sqrt((s.x - f.x).pow(2) + (s.y - f.y).pow(2))
+
+        private fun getDistanceBetweenPoints(f: Point, s: Point): Float =
+            sqrt((s.x - f.x).toFloat().pow(2) + (s.y - f.y).toFloat().pow(2))
 
     }
 
