@@ -2,14 +2,18 @@ package dev.sunnyday.postcreator.postcreator
 
 import android.content.Context
 import android.graphics.*
+import android.net.Uri
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.ImageView
 import androidx.annotation.ColorInt
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.postDelayed
 import androidx.core.widget.addTextChangedListener
+import com.bumptech.glide.Glide
+import dev.sunnyday.postcreator.core.common.android.Dimen
 import dev.sunnyday.postcreator.postcreator.decorations.TextDecorator
 import kotlinx.android.synthetic.main.postcreator__view.view.*
 
@@ -46,6 +50,18 @@ class PostCreatorView @JvmOverloads constructor(
 
     fun removeTextDecorator(decorator: TextDecorator) {
         textDecorator.removeTextDecorator(decorator)
+    }
+
+    fun addImage(uri: Uri) {
+        val image = ImageView(context)
+        addView(image, childCount - 2)
+
+        val size = Dimen.dp(92, context).toInt()
+        image.layoutParams = LayoutParams(size, size)
+
+        Glide.with(context)
+            .load(uri)
+            .into(image)
     }
 
     // TODO: https://github.com/SunnyDayDev/demo-post-creator/projects/1#card-31003220

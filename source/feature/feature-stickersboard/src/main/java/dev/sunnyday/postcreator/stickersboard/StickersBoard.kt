@@ -12,6 +12,7 @@ import kotlin.math.min
 
 class StickersBoard(
     context: Context,
+    private val stickers: List<Sticker>,
     private val callback: (Sticker) -> Unit
 ) : BottomSheetDialog(context) {
 
@@ -25,6 +26,7 @@ class StickersBoard(
         setContentView(R.layout.stickersboard__dialog_content)
 
         list.adapter = adapter
+        adapter.items = stickers
 
         // TODO: https://github.com/SunnyDayDev/demo-post-creator/issues/19
         content.maxHeight = context.resources.displayMetrics.heightPixels / 2
@@ -32,7 +34,6 @@ class StickersBoard(
 
         initFullWithSizing()
         initDynamicElevationTracking()
-        initStickers()
     }
 
     private fun initFullWithSizing() {
@@ -43,10 +44,6 @@ class StickersBoard(
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
-    }
-
-    private fun initStickers() {
-        adapter.items = (1L..24L).map(::Sticker)
     }
 
     private fun initDynamicElevationTracking() {
@@ -64,8 +61,10 @@ class StickersBoard(
 
     companion object {
 
-        fun show(context: Context, callback: (Sticker) -> Unit) {
-            val board = StickersBoard(context, callback)
+        fun show(context: Context, stickers: List<Sticker>, callback: (Sticker) -> Unit) {
+            if (stickers.isEmpty()) return
+
+            val board = StickersBoard(context, stickers, callback)
             board.show()
         }
 

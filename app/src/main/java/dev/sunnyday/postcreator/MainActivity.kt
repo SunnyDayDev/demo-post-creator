@@ -1,12 +1,13 @@
 package dev.sunnyday.postcreator
 
 import android.graphics.Color
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import androidx.core.view.updateLayoutParams
 import dev.sunnyday.postcreator.backgroundswitcher.Background
 import dev.sunnyday.postcreator.backgroundswitcher.BackgroundSwitcherToolbarListener
+import dev.sunnyday.postcreator.stickersboard.Sticker
 import dev.sunnyday.postcreator.stickersboard.StickersBoard
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlin.math.min
@@ -74,8 +75,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupStickers() {
         stickersButton.setOnClickListener {
-            StickersBoard.show(this) {
-                Log.d(MainActivity::class.java.simpleName, "Sticker selected: $it")
+            val stickers = (1L..24L).map {
+                Sticker(it, Uri.parse("file:///android_asset/stickers/$it.png"))
+            }
+
+            StickersBoard.show(this, stickers) {
+                creatorView.addImage(it.uri)
             }
         }
     }

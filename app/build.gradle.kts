@@ -33,6 +33,7 @@ dependencies {
     implementation(AndroidX.coreKtx)
     implementation(AndroidX.constraintLayout)
     implementation(AndroidX.material)
+    implementation(AndroidX.exifInterface)
 
     implementation(project(PostCreator.Core.common))
     implementation(project(PostCreator.Feature.postCreator))

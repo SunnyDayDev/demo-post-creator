@@ -27,6 +27,7 @@ object AndroidX {
     const val material = "com.google.android.material:material:1.1.0-rc01"
     const val recyclerView = "androidx.recyclerview:recyclerview:1.1.0"
     const val card = "androidx.cardview:cardview:1.0.0"
+    const val exifInterface = "androidx.exifinterface:exifinterface:1.2.0-beta01"
 
 }
 
