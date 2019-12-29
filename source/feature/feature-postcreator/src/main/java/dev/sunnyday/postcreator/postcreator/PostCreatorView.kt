@@ -18,6 +18,7 @@ import androidx.annotation.Dimension
 import androidx.core.graphics.contains
 import androidx.core.graphics.toPoint
 import androidx.core.view.isVisible
+import androidx.core.view.marginBottom
 import androidx.core.view.postDelayed
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.addTextChangedListener
@@ -47,6 +48,10 @@ class PostCreatorView @JvmOverloads constructor(
     private var activeImageTouchTracker: ImageTouchTracker? = null
 
     private val textDecorator = TextDecoratorView(context)
+
+    private var deleteButtonCenterPoint: Point = Point(0, 0)
+    private val deleteActionRadius = Dimen.dp(36, context)
+    private var isDeleteActionActive = false
 
     init {
         val inflater = LayoutInflater.from(context)
@@ -122,32 +127,70 @@ class PostCreatorView @JvmOverloads constructor(
             .into(image)
     }
 
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+
+        deleteButtonCenterPoint.set(
+            deleteButton.left + deleteButton.width / 2,
+            deleteButton.top + deleteButton.height / 2)
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val touchTracker = activeImageTouchTracker ?: findTouchTracker(event)
-            ?.also {
-                deleteButton.isVisible = true
-                activeImageTouchTracker = it
-            }
+            ?.also(this::activeImageTouchTracker::set)
 
         return touchTracker?.onTouchEvent(event) ?: super.onTouchEvent(event)
     }
 
     private fun findTouchTracker(event: MotionEvent): ImageTouchTracker? {
         val image = findImageUnderTouch(event) ?: return null
+        return ImageTouchTracker(image, this::onImageMoved, this::onImageInteractionCompleted)
+    }
 
-        return ImageTouchTracker(image) { touchPoint, trackedImage ->
-            activeImageTouchTracker = null
-            deleteButton.isVisible = false
+    private fun onImageMoved(touchPoint: Point, image: ImageView) {
+        setDeleteActiveActive(isDeleteAction(touchPoint))
 
-            val deleteButtonRect = Rect()
-            deleteButton.getLocalVisibleRect(deleteButtonRect)
-            deleteButtonRect.offset(deleteButton.left, deleteButton.top)
+        deleteButton.isVisible = true
+    }
 
-            if (deleteButtonRect.contains(touchPoint.toPoint())) {
-                images.remove(trackedImage)
-                removeView(trackedImage)
-            }
+    private fun isDeleteAction(touchPoint: Point): Boolean {
+        val distanceToDelete = getDistanceBetweenPoints(deleteButtonCenterPoint, touchPoint)
+        return distanceToDelete <= deleteActionRadius
+    }
+
+    private fun setDeleteActiveActive(isActive: Boolean) {
+        if (isDeleteActionActive == isActive) return
+        isDeleteActionActive = isActive
+
+        if (isActive) {
+            val size =  Dimen.dp(56, context).toInt()
+            deleteButton.setImageResource(R.drawable.postcreator__ic__fab_trash_released)
+            updateDeleteButtonSize(size)
+        } else {
+            val size =  Dimen.dp(48, context).toInt()
+            deleteButton.setImageResource(R.drawable.postcreator__ic__fab_trash)
+            updateDeleteButtonSize(size)
+        }
+    }
+
+    private fun updateDeleteButtonSize(size: Int) {
+        if (deleteButton.width == size) return
+
+        deleteButton.updateLayoutParams<LayoutParams> {
+            width = size
+            height = size
+            bottomMargin = this@PostCreatorView.height - deleteButtonCenterPoint.y - size / 2
+        }
+    }
+
+    private fun onImageInteractionCompleted(touchPoint: Point, image: ImageView) {
+        activeImageTouchTracker = null
+        deleteButton.isVisible = false
+
+        if (isDeleteAction(touchPoint)) {
+            images.remove(image)
+            removeView(image)
         }
     }
 
@@ -273,7 +316,8 @@ class PostCreatorView @JvmOverloads constructor(
 
     private class ImageTouchTracker(
         private val image: ImageView,
-        private val onComplete: (PointF, ImageView) -> Unit
+        onMoved: (Point, ImageView) -> Unit,
+        onComplete: (Point, ImageView) -> Unit
     ) {
 
         private var anchorPoint: Point? = null
@@ -291,6 +335,9 @@ class PostCreatorView @JvmOverloads constructor(
         private var startSize: Int? = null
         private var startDistance: Float? = null
         private var startAngle: Float? = null
+
+        private val onMovedCallback = onMoved
+        private val onCompleteCallback = onComplete
 
         fun onTouchEvent(event: MotionEvent): Boolean {
             when (event.actionMasked) {
@@ -342,7 +389,7 @@ class PostCreatorView @JvmOverloads constructor(
                 MotionEvent.ACTION_UP,
                 MotionEvent.ACTION_CANCEL -> {
                     if (firstActualPoint != null) {
-                        onComplete(firstActualPoint!!, image)
+                        onCompleteCallback(firstActualPoint!!.toPoint(), image)
                     }
 
                     firstPointerIndex = null
@@ -407,15 +454,13 @@ class PostCreatorView @JvmOverloads constructor(
 
             }
 
+            onMovedCallback(firstActualPoint.toPoint(), image)
         }
 
         private fun getTouchPoint(index: Int, event: MotionEvent): PointF =
             PointF(
                 event.getX(index),
                 event.getY(index))
-
-        private fun getDistanceBetweenPoints(f: PointF, s: PointF): Float =
-            sqrt((s.x - f.x).pow(2) + (s.y - f.y).pow(2))
 
         private fun getAngleBetweenPoints(f: PointF, s: PointF): Float {
             val atan = atan2((f.y - s.y).toDouble(), (f.x - s.x).toDouble())
@@ -427,6 +472,16 @@ class PostCreatorView @JvmOverloads constructor(
                 angle
             }
         }
+
+    }
+
+    companion object {
+
+        private fun getDistanceBetweenPoints(f: PointF, s: PointF): Float =
+            sqrt((s.x - f.x).pow(2) + (s.y - f.y).pow(2))
+
+        private fun getDistanceBetweenPoints(f: Point, s: Point): Float =
+            sqrt((s.x - f.x).toFloat().pow(2) + (s.y - f.y).toFloat().pow(2))
 
     }
 
