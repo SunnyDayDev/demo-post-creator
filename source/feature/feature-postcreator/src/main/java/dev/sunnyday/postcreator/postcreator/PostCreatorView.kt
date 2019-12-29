@@ -15,7 +15,6 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.annotation.ColorInt
 import androidx.annotation.Dimension
-import androidx.core.content.res.getColorStateListOrThrow
 import androidx.core.view.isVisible
 import androidx.core.view.postDelayed
 import androidx.core.view.updateLayoutParams
@@ -62,14 +61,16 @@ class PostCreatorView @JvmOverloads constructor(
         val attributes: TypedArray = context.theme
             .obtainStyledAttributes(attrs, R.styleable.PostCreatorView, 0, 0)
 
-        attributes.getColorStateList(R.styleable.PostCreatorView_actionsColor)
-            ?.let(this::setActionsColor)
+        try {
+            attributes.getColorStateList(R.styleable.PostCreatorView_actionsColor)
+                ?.let(this::setActionsColor)
 
-        attributes.getDimensionPixelSize(R.styleable.PostCreatorView_actionsBorderWidth, -1)
-            .takeIf { it != -1 }
-            ?.let(this::setActionsBorderWidth)
-
-        attributes.recycle()
+            attributes.getDimensionPixelSize(R.styleable.PostCreatorView_actionsBorderWidth, -1)
+                .takeIf { it != -1 }
+                ?.let(this::setActionsBorderWidth)
+        } finally {
+            attributes.recycle()
+        }
     }
 
     private fun initTextDecorationUpdating() {
