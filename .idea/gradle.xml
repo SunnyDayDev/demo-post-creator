@@ -17,6 +17,7 @@
             <option value="$PROJECT_DIR$/source/feature" />
             <option value="$PROJECT_DIR$/source/feature/feature-backgroundswitcher" />
             <option value="$PROJECT_DIR$/source/feature/feature-postcreator" />
+            <option value="$PROJECT_DIR$/source/feature/feature-stickersboard" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />
