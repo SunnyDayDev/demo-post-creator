@@ -15,6 +15,8 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.annotation.ColorInt
 import androidx.annotation.Dimension
+import androidx.core.graphics.contains
+import androidx.core.graphics.toPoint
 import androidx.core.view.isVisible
 import androidx.core.view.postDelayed
 import androidx.core.view.updateLayoutParams
@@ -133,9 +135,19 @@ class PostCreatorView @JvmOverloads constructor(
 
     private fun findTouchTracker(event: MotionEvent): ImageTouchTracker? {
         val image = findImageUnderTouch(event) ?: return null
-        return ImageTouchTracker(image) {
+
+        return ImageTouchTracker(image) { touchPoint, trackedImage ->
             activeImageTouchTracker = null
             deleteButton.isVisible = false
+
+            val deleteButtonRect = Rect()
+            deleteButton.getLocalVisibleRect(deleteButtonRect)
+            deleteButtonRect.offset(deleteButton.left, deleteButton.top)
+
+            if (deleteButtonRect.contains(touchPoint.toPoint())) {
+                images.remove(trackedImage)
+                removeView(trackedImage)
+            }
         }
     }
 
@@ -259,7 +271,10 @@ class PostCreatorView @JvmOverloads constructor(
 
     }
 
-    private class ImageTouchTracker(val image: ImageView, private val onComplete: () -> Unit) {
+    private class ImageTouchTracker(
+        private val image: ImageView,
+        private val onComplete: (PointF, ImageView) -> Unit
+    ) {
 
         private var anchorPoint: Point? = null
         private var anchorSize: Int? = null
@@ -326,6 +341,10 @@ class PostCreatorView @JvmOverloads constructor(
 
                 MotionEvent.ACTION_UP,
                 MotionEvent.ACTION_CANCEL -> {
+                    if (firstActualPoint != null) {
+                        onComplete(firstActualPoint!!, image)
+                    }
+
                     firstPointerIndex = null
                     firstStartPoint = null
                     firstActualPoint = null
@@ -333,8 +352,6 @@ class PostCreatorView @JvmOverloads constructor(
                     secondTouchPoint = null
                     secondActualPoint = null
                     startDistance = null
-
-                    onComplete()
                     return false
                 }
                 MotionEvent.ACTION_POINTER_UP -> {
