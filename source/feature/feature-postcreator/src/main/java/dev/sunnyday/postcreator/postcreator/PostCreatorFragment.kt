@@ -12,8 +12,7 @@ import dev.sunnyday.postcreator.backgroundswitcher.Background
 import dev.sunnyday.postcreator.backgroundswitcher.BackgroundSwitcherToolbarListener
 import dev.sunnyday.postcreator.core.app.rx.AppSchedulers
 import dev.sunnyday.postcreator.core.common.android.Dimen
-import dev.sunnyday.postcreator.core.permissions.AppPermissionRequest
-import dev.sunnyday.postcreator.core.permissions.PermissionRequestInteractor
+import dev.sunnyday.postcreator.postcreator.saver.ViewAsImageSaver
 import dev.sunnyday.postcreator.stickersboard.Sticker
 import dev.sunnyday.postcreator.stickersboard.StickersBoard
 import io.reactivex.disposables.CompositeDisposable
@@ -26,7 +25,7 @@ import kotlin.math.min
 class PostCreatorFragment : DaggerFragment() {
 
     @Inject
-    internal lateinit var permissionsInteractor: PermissionRequestInteractor
+    internal lateinit var asImageSaver: ViewAsImageSaver
 
     @Inject
     internal lateinit var schedulers: AppSchedulers
@@ -35,12 +34,6 @@ class PostCreatorFragment : DaggerFragment() {
 
     private val textStyleSwitcher: TextStyleSwitcher by lazy {
         TextStyleSwitcher(context!!)
-    }
-
-    override fun onStart() {
-        super.onStart()
-
-        requestStoragePermissions()
     }
 
     override fun onDestroy() {
@@ -61,6 +54,7 @@ class PostCreatorFragment : DaggerFragment() {
         setupTextStyleSwitcher()
         setupBackgroundSwitcher()
         setupStickers()
+        setupSaveButton()
     }
 
     private fun updateCreatorSize() {
@@ -129,14 +123,19 @@ class PostCreatorFragment : DaggerFragment() {
         }
     }
 
-    private fun requestStoragePermissions() {
-        permissionsInteractor.requirePermission(AppPermissionRequest.Storage)
-            .observeOn(schedulers.ui)
-            .subscribeBy(
-                onComplete = { Timber.d("Storage permissions granged") },
-                onError = { Timber.d("Error: $it")  }
-            )
-            .let(dispose::add)
+    private fun setupSaveButton() {
+        saveButton.setOnClickListener {
+            creatorView.isEnabled = false
+
+            asImageSaver.save(creatorView)
+                .observeOn(schedulers.ui)
+                .doFinally { creatorView.isEnabled = true }
+                .subscribeBy(
+                    onComplete = { Timber.d("Storage permissions granged") },
+                    onError = { Timber.d("Error: $it")  }
+                )
+                .let(dispose::add)
+        }
     }
 
 }

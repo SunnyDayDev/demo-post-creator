@@ -51,6 +51,11 @@ class PostCreatorBoardView @JvmOverloads constructor(
     private val deleteActionRadius = Dimen.dp(36, context)
     private var isDeleteActionActive = false
 
+    override fun setEnabled(enabled: Boolean) {
+        super.setEnabled(enabled)
+        textInput.isEnabled = enabled
+    }
+
     init {
         val inflater = LayoutInflater.from(context)
         inflater.inflate(R.layout.postcreatorboard__view, this, true)

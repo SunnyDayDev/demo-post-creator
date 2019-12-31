@@ -10,7 +10,7 @@ import dev.sunnyday.postcreator.postcreatorboard.PostCreatorBoardView
 import dev.sunnyday.postcreator.postcreatorboard.decorations.RoundedColorFillDecorator
 import dev.sunnyday.postcreator.postcreatorboard.decorations.TextDecorator
 
-class TextStyleSwitcher(private val context: Context) {
+internal class TextStyleSwitcher(private val context: Context) {
 
     private val textStyles: List<DecoratedTextStyle>
     private var activeTextStyleIndex = -1
