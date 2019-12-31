@@ -1,14 +1,18 @@
 rootProject.name='PostCreator'
 include ':app'
 
-include ':feature'
-project(':feature').projectDir = new File('source/feature')
-
-include ':feature:feature-postcreator'
-include ':feature:feature-backgroundswitcher'
-include ':feature:feature-stickersboard'
-
 include ':core'
 project(':core').projectDir = new File('source/core')
 
 include ':core:core-common'
+include ':core:core-app'
+include ':core:core-ui'
+include ':core:core-permissions'
+
+include ':feature'
+project(':feature').projectDir = new File('source/feature')
+
+include ':feature:feature-postcreator'
+include ':feature:feature-postcreatorboard'
+include ':feature:feature-backgroundswitcher'
+include ':feature:feature-stickersboard'
