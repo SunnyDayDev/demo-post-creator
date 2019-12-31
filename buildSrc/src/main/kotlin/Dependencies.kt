@@ -1,5 +1,7 @@
 @file:Suppress("MemberVisibilityCanBePrivate")
 
+import org.gradle.kotlin.dsl.DependencyHandlerScope
+
 object Jvm {
     const val version = "1.8"
 }
@@ -28,6 +30,68 @@ object AndroidX {
     const val recyclerView = "androidx.recyclerview:recyclerview:1.1.0"
     const val card = "androidx.cardview:cardview:1.0.0"
     const val exifInterface = "androidx.exifinterface:exifinterface:1.2.0-beta01"
+    const val fragment = "androidx.fragment:fragment:1.2.0-rc04"
+    const val fragmentKtx = "androidx.fragment:fragment-ktx:1.2.0-rc04"
+
+}
+
+object Rx {
+
+    const val java = "io.reactivex.rxjava2:rxjava:2.2.16"
+    const val android = "io.reactivex.rxjava2:rxandroid:2.1.1"
+    const val kotlin = "io.reactivex.rxjava2:rxkotlin:2.4.0"
+
+    fun addTo(handler: DependencyHandlerScope) {
+        handler.add("implementation", java)
+        handler.add("implementation", android)
+        handler.add("implementation", kotlin)
+    }
+
+}
+
+object Dagger {
+
+    private const val version = "2.25.4"
+
+    const val api = "com.google.dagger:dagger:$version"
+    const val android = "com.google.dagger:dagger-android:$version"
+    const val androidSupport = "com.google.dagger:dagger-android-support:$version"
+    const val androidProcessor = "com.google.dagger:dagger-android-processor:$version"
+    const val compiler = "com.google.dagger:dagger-compiler:$version"
+
+    object AssistedInject {
+
+        private const val version = "0.5.2"
+
+        const val api = "com.squareup.inject:assisted-inject-annotations-dagger2:$version"
+        const val processor = "com.squareup.inject:assisted-inject-processor-dagger2:$version"
+
+    }
+
+    fun addTo(handler: DependencyHandlerScope,
+              useAndroid: Boolean = true,
+              useAsist: Boolean = true,
+              enableProcessing: Boolean = true) {
+        handler.add("implementation", api)
+        if (enableProcessing) {
+            handler.add("kapt", compiler)
+        }
+
+        if (useAndroid) {
+            handler.add("implementation", android)
+            handler.add("implementation", androidSupport)
+            if (enableProcessing) {
+                handler.add("kapt", androidProcessor)
+            }
+        }
+
+        if (useAsist) {
+            handler.add("compileOnly", AssistedInject.api)
+            if (enableProcessing) {
+                handler.add("kapt", AssistedInject.processor)
+            }
+        }
+    }
 
 }
 
@@ -37,6 +101,12 @@ object Glide {
 
     const val api = "com.github.bumptech.glide:glide:$version"
     const val compiler = "com.github.bumptech.glide:compiler:$version"
+
+}
+
+object Log {
+
+    const val timber = "com.jakewharton.timber:timber:4.7.1"
 
 }
 
@@ -53,12 +123,17 @@ object PostCreator {
     object Core {
 
         const val common = ":core:core-common"
+        const val dagger = ":core:core-dagger"
+        const val ui = ":core:core-ui"
+        const val permissions = ":core:core-permissions"
+        const val app = ":core:core-app"
 
     }
 
     object Feature {
 
         const val postCreator = ":feature:feature-postcreator"
+        const val postCreatorBoard = ":feature:feature-postcreatorboard"
         const val backgroundSwitcher = ":feature:feature-backgroundswitcher"
         const val stickersBoard = ":feature:feature-stickersboard"
 

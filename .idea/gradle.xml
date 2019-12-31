@@ -13,10 +13,14 @@
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/buildSrc" />
             <option value="$PROJECT_DIR$/source/core" />
+            <option value="$PROJECT_DIR$/source/core/core-app" />
             <option value="$PROJECT_DIR$/source/core/core-common" />
+            <option value="$PROJECT_DIR$/source/core/core-permissions" />
+            <option value="$PROJECT_DIR$/source/core/core-ui" />
             <option value="$PROJECT_DIR$/source/feature" />
             <option value="$PROJECT_DIR$/source/feature/feature-backgroundswitcher" />
             <option value="$PROJECT_DIR$/source/feature/feature-postcreator" />
+            <option value="$PROJECT_DIR$/source/feature/feature-postcreatorboard" />
             <option value="$PROJECT_DIR$/source/feature/feature-stickersboard" />
           </set>
         </option>

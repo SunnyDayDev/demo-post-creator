@@ -1,0 +1,7 @@
+package dev.sunnyday.postcreator.postcreator
+
+import dev.sunnyday.postcreator.postcreatorboard.decorations.TextDecorator
+
+data class DecoratedTextStyle(
+    val textColor: Int,
+    val decorations: List<TextDecorator>)
