@@ -1,6 +1,7 @@
 package dev.sunnyday.postcreator.postcreator
 
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,10 +9,13 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.updateLayoutParams
 import dagger.android.support.DaggerFragment
-import dev.sunnyday.postcreator.backgroundswitcher.Background
-import dev.sunnyday.postcreator.backgroundswitcher.BackgroundSwitcherToolbarListener
+import dev.sunnyday.postcreator.drawablechooser.DrawableItem
+import dev.sunnyday.postcreator.drawablechooser.DrawableChooserListener
 import dev.sunnyday.postcreator.core.app.rx.AppSchedulers
 import dev.sunnyday.postcreator.core.common.android.Dimen
+import dev.sunnyday.postcreator.domain.backgrounds.Background
+import dev.sunnyday.postcreator.domain.backgrounds.resolver.BackgroundResolver
+import dev.sunnyday.postcreator.domain.backgrounds.BackgroundsRepository
 import dev.sunnyday.postcreator.postcreator.saver.ViewAsImageSaver
 import dev.sunnyday.postcreator.stickersboard.Sticker
 import dev.sunnyday.postcreator.stickersboard.StickersBoard
@@ -25,10 +29,19 @@ import kotlin.math.min
 class PostCreatorFragment : DaggerFragment() {
 
     @Inject
+    internal lateinit var backgroundsRepository: BackgroundsRepository
+
+    @Inject
+    internal lateinit var backgroundsResolver: BackgroundResolver
+
+    @Inject
     internal lateinit var asImageSaver: ViewAsImageSaver
 
     @Inject
     internal lateinit var schedulers: AppSchedulers
+
+    private var backgroundsMap = mapOf<Long, Background>()
+    private var drawableItemsMap = mapOf<Background, DrawableItem>()
 
     private val dispose = CompositeDisposable()
 
@@ -52,7 +65,7 @@ class PostCreatorFragment : DaggerFragment() {
 
         updateCreatorSize()
         setupTextStyleSwitcher()
-        setupBackgroundSwitcher()
+        setupBackgrounds()
         setupStickers()
         setupSaveButton()
     }
@@ -74,40 +87,55 @@ class PostCreatorFragment : DaggerFragment() {
         }
     }
 
-    private fun setupBackgroundSwitcher() {
-        backgroundSwitcher.items = listOf(
-            Background.Color(Color.WHITE),
-            Background.Gradient(0xFF00EFC8.toInt(), 0xFF0762E5.toInt()),
-            Background.Gradient(0xFFAAE400.toInt(), 0xFF04B025.toInt()),
-            Background.Gradient(0xFFFFBA00.toInt(), 0xFFFF590B.toInt()),
-            Background.Gradient(0xFFFF003F.toInt(), 0xFF99004F.toInt()),
-            Background.Resource(R.drawable.bg_beach),
-            Background.Resource(R.drawable.bg_stars_center),
-            Background.Color(Color.BLACK),
-            Background.Gradient(0xFF02EFC8.toInt(), 0xFF0762E5.toInt()),
-            Background.Gradient(0xFFAAE460.toInt(), 0xFF04B025.toInt()),
-            Background.Gradient(0xFFFFBA00.toInt(), 0xFF27590B.toInt()),
-            Background.Gradient(0xFF4F0004.toInt(), 0xFF29404F.toInt()))
+    private fun setupBackgrounds() {
+        backgroundsRepository.backgrounds()
+            .observeOn(schedulers.ui)
+            .subscribeBy(onNext = this::handleBackgrounds)
+            .let(dispose::add)
 
-        backgroundSwitcher.addListener(object : BackgroundSwitcherToolbarListener {
+        drawableChooser.addListener(object : DrawableChooserListener {
 
-            override fun onBackgroundSelected(background: Background) {
-                val context = context ?: return
-
-                creatorView.background = Background.getDrawable(context, background)
-
-                if (background is Background.Color && background.color == Color.WHITE) {
-                    val actionsBorderWidth = Dimen.dp(2, context).toInt()
-                    creatorView.setActionsBorderWidth(actionsBorderWidth)
-                } else {
-                    creatorView.setActionsBorderWidth(0)
-                }
+            override fun onSelected(item: DrawableItem) {
+                val background = backgroundsMap[item.tag] ?: return
+                onBackgroundChoosed(background)
             }
 
         })
-
-        backgroundSwitcher.selectedPosition = 0
     }
+
+    private fun handleBackgrounds(backgrounds: List<Background>) {
+        val currentSelected = drawableChooser.selectedPosition
+            .let { drawableChooser.items.getOrNull(it) }
+            ?.let { backgroundsMap[it.tag] }
+
+        backgroundsMap = backgrounds.associateBy { it.id }
+
+        val drawableItemsMap = backgrounds.associateWith {
+            drawableItemsMap[it] ?: chooserItemForBackground(it)
+        }
+        this.drawableItemsMap = drawableItemsMap
+
+        drawableChooser.items = backgrounds.mapNotNull(drawableItemsMap::get)
+        drawableChooser.selectedPosition = currentSelected?.let(backgrounds::indexOf) ?: 0
+    }
+
+    private fun onBackgroundChoosed(background: Background) {
+        val context = context ?: return
+
+        creatorView.background = backgroundsResolver.resolve(background)
+
+        if (background is Background.Color && background.color == Color.WHITE) {
+            val actionsBorderWidth = Dimen.dp(2, context).toInt()
+            creatorView.setActionsBorderWidth(actionsBorderWidth)
+        } else {
+            creatorView.setActionsBorderWidth(0)
+        }
+    }
+
+    private fun chooserItemForBackground(background: Background): DrawableItem =
+        DrawableItem(background.id, source = {
+            backgroundsResolver.resolveIcon(background) ?: ColorDrawable(Color.TRANSPARENT)
+        })
 
     private fun setupStickers() {
         stickersButton.setOnClickListener {

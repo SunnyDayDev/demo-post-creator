@@ -42,6 +42,7 @@ dependencies {
     Rx.addTo(this)
     Dagger.addTo(this, useAndroid = true)
 
+    implementation(project(PostCreator.Core.app))
     implementation(project(PostCreator.Core.common))
     implementation(project(PostCreator.Core.ui))
 
