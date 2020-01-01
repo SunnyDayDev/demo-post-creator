@@ -4,14 +4,12 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commit
 import dev.sunnyday.postcreator.core.ui.ActivityObserver
 import io.reactivex.Completable
-import io.reactivex.CompletableEmitter
 import io.reactivex.disposables.Disposables
+import io.reactivex.rxkotlin.ofType
 import java.lang.ref.WeakReference
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
-
-// TODO: Handle situation when fragment is destroyed before call callback
 
 @Singleton
 internal class PermissionRequestInteractorImpl @Inject constructor(
@@ -20,21 +18,18 @@ internal class PermissionRequestInteractorImpl @Inject constructor(
 
     override fun requirePermission(request: PermissionRequest): Completable =
         activityObserver.lastStartedActivity
-            .filter { (activity) -> (activity as? FragmentActivity) != null }
+            .filter { (activity) -> activity is FragmentActivity }
             .firstOrError()
             .map { (activity) -> activity as FragmentActivity }
-            .flatMapCompletable { activity ->
-                Completable.create { requestPermission(activity, request, it) }
-            }
+            .flatMapCompletable { requestPermission(it, request) }
 
     private fun requestPermission(
         activity: FragmentActivity,
-        request: PermissionRequest,
-        emitter: CompletableEmitter
-    ) {
-        val requestFragment = PermissionRequestFragment()
-        requestFragment.request = request
-        requestFragment.resultEmitter = emitter
+        request: PermissionRequest
+    ) = Completable.create { emitter ->
+        val requestFragment = PermissionRequestFragment.create(request,
+            onSuccess = emitter::onComplete,
+            onError = { emitter.tryOnError(it) })
 
         try {
             val tag = "requestPermission:${UUID.randomUUID()}"

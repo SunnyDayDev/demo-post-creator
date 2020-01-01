@@ -4,27 +4,26 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
-import io.reactivex.CompletableEmitter
 
-internal class PermissionRequestFragment : Fragment() {
+internal class PermissionRequestFragment private constructor(
+    private val executingRequest: ExecutingPermissionRequest?
+) : Fragment() {
 
-    var request: PermissionRequest? = null
-    var resultEmitter: CompletableEmitter? = null
+    constructor(): this(null)
 
     private var isDismissed: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val request = request
-        val resultEmitter = resultEmitter
-
-        if (request == null || resultEmitter == null) {
+        if (executingRequest == null) {
             dismiss()
             return
         }
 
         retainInstance = true
+
+        val request = executingRequest.request
         requestPermissions(request.permissions, request.code)
     }
 
@@ -39,8 +38,8 @@ internal class PermissionRequestFragment : Fragment() {
     override fun onDestroy() {
         super.onDestroy()
 
-        if (!isDismissed) {
-            resultEmitter?.tryOnError(PermissionsRequestInterruptedError())
+        if (!isDismissed && executingRequest != null) {
+            executingRequest.onError(PermissionsRequestInterruptedError())
         }
     }
 
@@ -49,14 +48,12 @@ internal class PermissionRequestFragment : Fragment() {
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-
-        val request = request
-        val resultEmitter = resultEmitter
-
-        if (request == null || resultEmitter == null) {
+        if (executingRequest == null) {
             dismiss()
             return
         }
+
+        val (request, onSuccess, onError) = executingRequest
 
         if (requestCode == request.code) {
 
@@ -66,9 +63,9 @@ internal class PermissionRequestFragment : Fragment() {
                 .map { (i, _) -> permissions[i] }
 
             if (nonGrantedPermissions.isEmpty()) {
-                resultEmitter.onComplete()
+                onSuccess.invoke()
             } else {
-                resultEmitter.onError(PermissionsNotGrantedError(nonGrantedPermissions))
+                onError.invoke(PermissionsNotGrantedError(nonGrantedPermissions))
             }
 
             dismiss()
@@ -81,6 +78,22 @@ internal class PermissionRequestFragment : Fragment() {
         parentFragmentManager.commit(allowStateLoss = true) {
             remove(this@PermissionRequestFragment)
         }
+    }
+
+    private data class ExecutingPermissionRequest(
+        val request: PermissionRequest,
+        val onSuccess: () -> Unit,
+        val onError: (Error) -> Unit)
+
+    companion object {
+
+        fun create(request: PermissionRequest,
+                   onSuccess: () -> Unit,
+                   onError: (Error) -> Unit): PermissionRequestFragment {
+            val executingRequest = ExecutingPermissionRequest(request, onSuccess, onError)
+            return PermissionRequestFragment(executingRequest)
+        }
+
     }
 
 }
