@@ -47,8 +47,9 @@ dependencies {
     implementation(project(PostCreator.Core.ui))
     implementation(project(PostCreator.Core.permissions))
     implementation(project(PostCreator.Core.app))
+    implementation(project(PostCreator.Domain.backgrounds))
     implementation(project(PostCreator.Feature.postCreatorBoard))
-    implementation(project(PostCreator.Feature.backgroundSwitcher))
+    implementation(project(PostCreator.Feature.drawableChooser))
     implementation(project(PostCreator.Feature.stickersBoard))
 
     testImplementation(Test.junit)

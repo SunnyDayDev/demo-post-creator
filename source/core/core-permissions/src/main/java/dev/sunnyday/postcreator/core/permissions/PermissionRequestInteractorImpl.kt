@@ -5,7 +5,6 @@ import androidx.fragment.app.commit
 import dev.sunnyday.postcreator.core.ui.ActivityObserver
 import io.reactivex.Completable
 import io.reactivex.disposables.Disposables
-import io.reactivex.rxkotlin.ofType
 import java.lang.ref.WeakReference
 import java.util.*
 import javax.inject.Inject

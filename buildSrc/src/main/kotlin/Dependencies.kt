@@ -69,7 +69,7 @@ object Dagger {
     }
 
     fun addTo(handler: DependencyHandlerScope,
-              useAndroid: Boolean = true,
+              useAndroid: Boolean = false,
               useAsist: Boolean = true,
               enableProcessing: Boolean = true) {
         handler.add("implementation", api)
@@ -91,6 +91,24 @@ object Dagger {
                 handler.add("kapt", AssistedInject.processor)
             }
         }
+    }
+
+}
+
+object Room {
+
+    private const val version = "2.2.3"
+
+    const val api = "androidx.room:room-runtime:$version"
+    const val ktx = "androidx.room:room-ktx:$version"
+    const val rx = "androidx.room:room-rxjava2:$version"
+    const val processor = "androidx.room:room-compiler:$version"
+
+    fun addTo(handler: DependencyHandlerScope) {
+        handler.add("implementation", api)
+        handler.add("implementation", ktx)
+        handler.add("implementation", rx)
+        handler.add("kapt", processor)
     }
 
 }
@@ -130,11 +148,17 @@ object PostCreator {
 
     }
 
+    object Domain {
+
+        const val backgrounds = ":domain:domain-backgrounds"
+
+    }
+
     object Feature {
 
         const val postCreator = ":feature:feature-postcreator"
         const val postCreatorBoard = ":feature:feature-postcreatorboard"
-        const val backgroundSwitcher = ":feature:feature-backgroundswitcher"
+        const val drawableChooser = ":feature:feature-drawablechooser"
         const val stickersBoard = ":feature:feature-stickersboard"
 
     }
