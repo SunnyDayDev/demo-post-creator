@@ -89,7 +89,7 @@ class StickersBoard private constructor(
     private fun onStickerSelected(sticker: Sticker, stickerView: ImageView) {
         val contentRoot = findParent(stickerView) { it.id == android.R.id.content }
 
-        if (contentRoot ==null || targetRect == null) {
+        if (contentRoot == null || targetRect == null) {
             callback(sticker)
             dismiss()
             return
