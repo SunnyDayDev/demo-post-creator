@@ -1,6 +1,7 @@
 package dev.sunnyday.postcreator.postcreator
 
 import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
@@ -9,13 +10,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.updateLayoutParams
 import dagger.android.support.DaggerFragment
-import dev.sunnyday.postcreator.drawablechooser.DrawableItem
-import dev.sunnyday.postcreator.drawablechooser.DrawableChooserListener
 import dev.sunnyday.postcreator.core.app.rx.AppSchedulers
 import dev.sunnyday.postcreator.core.common.android.Dimen
+import dev.sunnyday.postcreator.core.common.android.attachToLifecycle
 import dev.sunnyday.postcreator.domain.backgrounds.Background
-import dev.sunnyday.postcreator.domain.backgrounds.resolver.BackgroundResolver
 import dev.sunnyday.postcreator.domain.backgrounds.BackgroundsRepository
+import dev.sunnyday.postcreator.domain.backgrounds.resolver.BackgroundResolver
+import dev.sunnyday.postcreator.drawablechooser.DrawableChooserListener
+import dev.sunnyday.postcreator.drawablechooser.DrawableItem
 import dev.sunnyday.postcreator.postcreator.saver.ViewAsImageSaver
 import dev.sunnyday.postcreator.stickersboard.Sticker
 import dev.sunnyday.postcreator.stickersboard.StickersBoard
@@ -25,6 +27,7 @@ import kotlinx.android.synthetic.main.postcreator__fragment.*
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.math.min
+
 
 class PostCreatorFragment : DaggerFragment() {
 
@@ -139,16 +142,46 @@ class PostCreatorFragment : DaggerFragment() {
 
     private fun setupStickers() {
         stickersButton.setOnClickListener {
-            val context = context ?: return@setOnClickListener
+            val activity = activity ?: return@setOnClickListener
 
             val stickers = (1L..24L).map {
                 Sticker(it, Uri.parse("file:///android_asset/stickers/$it.png"))
             }
 
-            StickersBoard.show(context, stickers) {
-                creatorView.addImage(it.uri)
+            val stickerRect = getNewStickerRect()
+            val stickerWindowRect = getStickerRectInWindow(stickerRect)
+
+            val stickersBoard = StickersBoard.show(activity, stickers, stickerWindowRect) {
+                creatorView.addImage(it.uri, stickerRect)
             }
+
+            stickersBoard.attachToLifecycle(lifecycle)
         }
+    }
+
+    private fun getNewStickerRect(): Rect {
+        val context = context ?: return Rect()
+
+        val size = Dimen.dp(92, context).toInt()
+        val left = (creatorView.width - size) / 2
+
+        return Rect(left, 0, left + size, size)
+    }
+
+    private fun getStickerRectInWindow(stickerRect: Rect): Rect {
+        val activity = activity ?: return Rect()
+
+        val stickerWindowRect = Rect()
+        creatorView.getGlobalVisibleRect(stickerWindowRect)
+        stickerWindowRect.offset(stickerRect.left, stickerRect.top)
+        stickerWindowRect.right = stickerWindowRect.left + stickerRect.width()
+        stickerWindowRect.bottom = stickerWindowRect.top + stickerRect.height()
+
+        val decorViewRect = Rect()
+        activity.window.decorView.getWindowVisibleDisplayFrame(decorViewRect)
+        stickerWindowRect.offset(0, -decorViewRect.top)
+
+        return stickerWindowRect
     }
 
     private fun setupSaveButton() {

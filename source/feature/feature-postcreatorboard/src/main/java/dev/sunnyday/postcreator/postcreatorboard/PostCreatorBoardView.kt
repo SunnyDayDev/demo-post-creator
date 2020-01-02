@@ -117,13 +117,20 @@ class PostCreatorBoardView @JvmOverloads constructor(
         textDecorator.removeTextDecorator(decorator)
     }
 
-    fun addImage(uri: Uri) {
+    fun addImage(uri: Uri, rect: Rect? = null) {
         val image = ImageView(context)
         images.add(0, image)
         addView(image, indexOfChild(textDecorator))
 
-        val size = Dimen.dp(92, context).toInt()
-        image.layoutParams = LayoutParams(size, size)
+        image.layoutParams = if (rect == null) {
+            val size = Dimen.dp(92, context).toInt()
+            LayoutParams(size, size)
+        } else {
+            LayoutParams(rect.width(), rect.height()).apply {
+                topMargin = rect.top
+                leftMargin = rect.left
+            }
+        }
 
         Glide.with(context)
             .load(uri)
