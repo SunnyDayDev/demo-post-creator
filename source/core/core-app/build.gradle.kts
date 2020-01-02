@@ -43,6 +43,8 @@ dependencies {
     Dagger.addTo(this, useAndroid = true, useAsist = false, enableProcessing = false)
 
     implementation(project(PostCreator.Core.common))
+    implementation(project(PostCreator.Core.permissions))
+    implementation(project(PostCreator.Core.activityForResult))
 
     testImplementation(Test.junit)
     androidTestImplementation(Test.junitExt)
