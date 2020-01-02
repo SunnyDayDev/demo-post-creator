@@ -11,7 +11,7 @@ class MaxHeightLinearLayout @JvmOverloads constructor(
 ) : LinearLayout(context, attrs, defStyle) {
 
     var maxHeight: Int by Delegates.observable(Int.MAX_VALUE) { _, _, _ ->
-        invalidate()
+        requestLayout()
     }
 
     init {

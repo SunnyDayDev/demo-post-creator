@@ -3,14 +3,16 @@ package dev.sunnyday.postcreator.stickersboard
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.RequestManager
 import kotlinx.android.synthetic.main.stickersboard__item.view.*
 import kotlin.properties.Delegates
 
 internal class StickersBoardAdapter(
-    val onItemClick: (Int, Sticker) -> Unit
+    val onItemClick: (Sticker, ImageView) -> Unit
 ) : RecyclerView.Adapter<StickersBoardAdapter.StickerViewHolder>() {
 
     var items: List<Sticker> by Delegates.observable(emptyList()) { _, old, new ->
@@ -48,18 +50,23 @@ internal class StickersBoardAdapter(
 
     class StickerViewHolder(
         private val view: View,
-        private val onItemClick: (Int, Sticker) -> Unit
+        private val onItemClick: (Sticker, ImageView) -> Unit
     ) : RecyclerView.ViewHolder(view) {
 
         fun bind(sticker: Sticker) {
-            val glide = Glide.with(view.context)
+            val glide: RequestManager
+            try {
+                glide = Glide.with(view.context)
+            } catch (ignore: Throwable) {
+                return
+            }
 
             glide.clear(view.image)
             glide.load(sticker.uri)
                 .into(view.image)
 
             view.button.setOnClickListener {
-                onItemClick(adapterPosition, sticker)
+                onItemClick(sticker, view.image)
             }
         }
 
