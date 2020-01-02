@@ -8,11 +8,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.updateLayoutParams
 import dagger.android.support.DaggerFragment
 import dev.sunnyday.postcreator.core.app.rx.AppSchedulers
 import dev.sunnyday.postcreator.core.common.android.Dimen
 import dev.sunnyday.postcreator.core.common.android.attachToLifecycle
+import dev.sunnyday.postcreator.core.permissions.PermissionsNotGrantedError
 import dev.sunnyday.postcreator.domain.backgrounds.Background
 import dev.sunnyday.postcreator.domain.backgrounds.BackgroundsRepository
 import dev.sunnyday.postcreator.domain.backgrounds.resolver.BackgroundResolver
@@ -138,7 +140,7 @@ class PostCreatorFragment : DaggerFragment() {
 
     private fun onAddBackgroundRequested() {
         addBackgroundOperation.execute()
-            .subscribeBy()
+            .subscribeBy(onError = this::checkPermissionError)
             .let(dispose::add)
     }
 
@@ -198,11 +200,20 @@ class PostCreatorFragment : DaggerFragment() {
             viewToFileOperation.drawToFile(creatorView)
                 .observeOn(schedulers.ui)
                 .doFinally { creatorView.isEnabled = true }
-                .subscribeBy(
-                    onComplete = { Timber.d("Storage permissions granged") },
-                    onError = { Timber.d("Error: $it")  }
-                )
+                .subscribeBy(onError = this::checkPermissionError)
                 .let(dispose::add)
+        }
+    }
+
+    private fun checkPermissionError(error: Throwable) {
+        if (error is PermissionsNotGrantedError) {
+            val context = context ?: return
+
+            AlertDialog.Builder(context)
+                .setMessage(R.string.postcreator__prompt__permission_not_granted_error)
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
+                .attachToLifecycle(lifecycle)
         }
     }
 
