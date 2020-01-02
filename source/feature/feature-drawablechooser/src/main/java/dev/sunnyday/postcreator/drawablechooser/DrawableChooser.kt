@@ -13,11 +13,17 @@ class DrawableChooser @JvmOverloads constructor(
     var items: List<DrawableItem>
         get() = adapter.items
         set(value) {
+            val wasEmpty = adapter.items.isEmpty()
+
             val newSelectedPosition = adapter.items.getOrNull(adapter.selectedPosition)
                 ?.let(value::indexOf) ?: -1
 
             adapter.items = value
             adapter.selectedPosition = newSelectedPosition
+
+            if (wasEmpty) {
+                list.scrollToPosition(0)
+            }
         }
 
     var selectedPosition: Int
@@ -34,10 +40,11 @@ class DrawableChooser @JvmOverloads constructor(
     }
 
     private val adapter = DrawableChooserAdapter(
-        onSelectedListener = { i, background ->
+        onItemSelected = { i, background ->
             internalSetSelectedPosition(i, false)
             notifySelected(background)
-        })
+        },
+        onAddClick = this::notifyAddClick)
 
     private var listeners = mutableSetOf<DrawableChooserListener>()
 
@@ -62,6 +69,10 @@ class DrawableChooser @JvmOverloads constructor(
         listeners.forEach {
             it.onSelected(item)
         }
+    }
+
+    private fun notifyAddClick() {
+        listeners.forEach(DrawableChooserListener::onAddClick)
     }
 
 }

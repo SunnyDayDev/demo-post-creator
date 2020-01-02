@@ -10,6 +10,7 @@ include ':core:core-common'
 include ':core:core-app'
 include ':core:core-ui'
 include ':core:core-permissions'
+include ':core:core-activityforresult'
 
 // endregion
 

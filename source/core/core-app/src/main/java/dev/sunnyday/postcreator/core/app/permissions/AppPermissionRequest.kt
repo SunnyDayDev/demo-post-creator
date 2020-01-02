@@ -1,6 +1,7 @@
-package dev.sunnyday.postcreator.core.permissions
+package dev.sunnyday.postcreator.core.app.permissions
 
 import android.Manifest
+import dev.sunnyday.postcreator.core.permissions.PermissionRequest
 
 sealed class AppPermissionRequest(
     requestCode: Int,

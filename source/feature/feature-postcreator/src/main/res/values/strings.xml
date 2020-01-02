@@ -1,4 +1,5 @@
 <resources>
     <string name="postcreator__prompt__new_record">Новая запись</string>
     <string name="postcreator__prompt__save">Сохранить</string>
+    <string name="postcreator__prompt__add_background_title">Добавить фон</string>
 </resources>

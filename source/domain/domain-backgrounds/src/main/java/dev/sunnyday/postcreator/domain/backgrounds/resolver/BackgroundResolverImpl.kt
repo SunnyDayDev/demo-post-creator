@@ -1,6 +1,5 @@
 package dev.sunnyday.postcreator.domain.backgrounds.resolver
 
-import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -10,7 +9,7 @@ import android.net.Uri
 import androidx.core.content.ContextCompat
 import dev.sunnyday.postcreator.domain.backgrounds.Background
 import dev.sunnyday.postcreator.domain.backgrounds.HasBackgroundIcon
-import java.io.FileInputStream
+import dev.sunnyday.postcreator.domain.backgrounds.util.InputStreamUtil
 import javax.inject.Inject
 
 internal class BackgroundResolverImpl @Inject constructor(
@@ -43,14 +42,8 @@ internal class BackgroundResolverImpl @Inject constructor(
     }
 
     private fun resolveDrawableByUri(uri: Uri): Drawable? {
-        val inputStream = when (uri.scheme) {
-            "file" -> uri.path?.let(::FileInputStream)
-            ContentResolver.SCHEME_ANDROID_RESOURCE, "content" ->
-                context.contentResolver.openInputStream(uri)
-            else -> null
-        }
-
-        inputStream ?: return null
+        val inputStream = InputStreamUtil.inputStreamFromUri(uri, context)
+            ?: return null
 
         return Drawable.createFromStream(inputStream, null)
     }

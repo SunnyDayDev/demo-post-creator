@@ -4,4 +4,6 @@ interface DrawableChooserListener {
 
     fun onSelected(item: DrawableItem)
 
+    fun onAddClick()
+
 }
