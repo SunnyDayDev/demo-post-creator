@@ -149,18 +149,18 @@ class PostCreatorFragment : DaggerFragment() {
 
     private fun setupStickers() {
         stickersButton.setOnClickListener {
-            val activity = activity ?: return@setOnClickListener
+            val context = context ?: return@setOnClickListener
 
             val stickers = (1L..24L).map {
                 Sticker(it, Uri.parse("file:///android_asset/stickers/$it.png"))
             }
 
             val stickerRect = getNewStickerRect()
-            val stickerWindowRect = getStickerRectInWindow(stickerRect)
 
-            val stickersBoard = StickersBoard.show(activity, stickers, stickerWindowRect) {
-                creatorView.addImage(it.uri, stickerRect)
-            }
+            val stickersBoard = StickersBoard.show(
+                context, stickers,
+                stickerRectProvider = { getStickerRectInWindow(stickerRect) },
+                callback = { creatorView.addImage(it.uri, stickerRect) })
 
             stickersBoard.attachToLifecycle(lifecycle)
         }

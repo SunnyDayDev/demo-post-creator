@@ -27,7 +27,7 @@ import kotlin.math.min
 class StickersBoard private constructor(
     context: Context,
     private val stickers: List<Sticker>,
-    private val targetRect: Rect? = null,
+    private val targetRectProvider: (() -> Rect)? = null,
     private val callback: (Sticker) -> Unit
 ) : BottomSheetDialog(context) {
 
@@ -89,7 +89,7 @@ class StickersBoard private constructor(
     private fun onStickerSelected(sticker: Sticker, stickerView: ImageView) {
         val contentRoot = findParent(stickerView) { it.id == android.R.id.content }
 
-        if (contentRoot == null || targetRect == null) {
+        if (contentRoot == null || targetRectProvider == null) {
             callback(sticker)
             dismiss()
             return
@@ -103,6 +103,7 @@ class StickersBoard private constructor(
         (stickerView.parent as ViewGroup).removeView(stickerView)
         (contentRoot[0] as ViewGroup).addView(stickerView)
 
+        val targetRect = targetRectProvider.invoke()
         val evaluator = RectEvaluator(Rect())
 
         ValueAnimator.ofFloat(0f, 1f).apply {
@@ -142,9 +143,9 @@ class StickersBoard private constructor(
         fun show(
             context: Context,
             stickers: List<Sticker>,
-            targetRect: Rect? = null,
+            stickerRectProvider: (() -> Rect)? = null,
             callback: (Sticker) -> Unit
-        ) = StickersBoard(context, stickers, targetRect, callback)
+        ) = StickersBoard(context, stickers, stickerRectProvider, callback)
             .also(StickersBoard::show)
 
     }
