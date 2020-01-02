@@ -8,7 +8,8 @@ import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.backgroundswitcher__toolbar_item.view.*
 
 internal class DrawableChooserAdapter(
-    private val onSelectedListener: (Int, DrawableItem) -> Unit
+    private val onItemSelected: (Int, DrawableItem) -> Unit,
+    private val onAddClick: () -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     var items: List<DrawableItem> = emptyList()
@@ -66,16 +67,26 @@ internal class DrawableChooserAdapter(
     ): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
 
-        val layoutId =
-            if (viewType == TYPE_ITEM) R.layout.backgroundswitcher__toolbar_item
-            else R.layout.backgroundswitcher__toolbar_selected_item
-        val itemView = inflater.inflate(layoutId, parent, false)
-        return BackgroundItemViewHolder(itemView, onSelectedListener)
+        return when (viewType) {
+            TYPE_ADD_ACTION -> {
+                val itemView = inflater.inflate(
+                    R.layout.backgroundswitcher__toolbar_add_item, parent, false)
+                ActionItemViewHolder(itemView)
+            }
+            else -> {
+                val layoutId =
+                    if (viewType == TYPE_ITEM) R.layout.backgroundswitcher__toolbar_item
+                    else R.layout.backgroundswitcher__toolbar_selected_item
+                val itemView = inflater.inflate(layoutId, parent, false)
+                BackgroundItemViewHolder(itemView, onItemSelected)
+            }
+        }
     }
 
-    override fun getItemCount(): Int = items.size
+    override fun getItemCount(): Int = items.size + 1
 
     override fun getItemViewType(position: Int): Int = when (position) {
+        itemCount - 1 -> TYPE_ADD_ACTION
         selectedPosition -> TYPE_SELECTED_ITEM
         else -> TYPE_ITEM
     }
@@ -84,20 +95,30 @@ internal class DrawableChooserAdapter(
         holder: RecyclerView.ViewHolder, position: Int
     ) = when (holder) {
         is BackgroundItemViewHolder -> holder.bind(items[position])
-        else -> {
+        is ActionItemViewHolder -> holder.bind(onAddClick)
+        else -> { }
+    }
+
+    private class ActionItemViewHolder(
+        private val view: View
+    ) : RecyclerView.ViewHolder(view) {
+
+        fun bind(onClick: () -> Unit) {
+            view.button.setOnClickListener { onClick() }
         }
+
     }
 
     private class BackgroundItemViewHolder(
         private val view: View,
-        private val onSelectedListener: (Int, DrawableItem) -> Unit
+        private val onItemSelected: (Int, DrawableItem) -> Unit
     ) : RecyclerView.ViewHolder(view) {
 
         fun bind(item: DrawableItem) {
             view.backgroundImage.setImageDrawable(item.source())
 
             view.button.setOnClickListener {
-                onSelectedListener(adapterPosition, item)
+                onItemSelected(adapterPosition, item)
             }
         }
 
@@ -107,6 +128,7 @@ internal class DrawableChooserAdapter(
 
         private const val TYPE_ITEM = 0
         private const val TYPE_SELECTED_ITEM = 1
+        private const val TYPE_ADD_ACTION = 2
 
     }
 

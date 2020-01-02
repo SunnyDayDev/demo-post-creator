@@ -9,6 +9,7 @@ import dagger.android.AndroidInjector
 import dagger.android.ContributesAndroidInjector
 import dev.sunnyday.postcreator.App
 import dev.sunnyday.postcreator.AppActivity
+import dev.sunnyday.postcreator.core.activityforresult.di.CoreActivityForResultModule
 import dev.sunnyday.postcreator.core.app.dagger.PerActivity
 import dev.sunnyday.postcreator.core.app.di.CoreAppModule
 import dev.sunnyday.postcreator.core.permissions.di.CorePermissionsModule
@@ -22,6 +23,7 @@ import javax.inject.Singleton
         CoreUIModule::class,
         CoreAppModule::class,
         CorePermissionsModule::class,
+        CoreActivityForResultModule::class,
         DomainBackgroundsModule::class,
         AppModule::class,
         AndroidInjectionModule::class

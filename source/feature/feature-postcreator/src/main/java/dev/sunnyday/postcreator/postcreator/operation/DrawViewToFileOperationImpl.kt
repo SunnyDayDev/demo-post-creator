@@ -1,16 +1,16 @@
-package dev.sunnyday.postcreator.postcreator.saver
+package dev.sunnyday.postcreator.postcreator.operation
 
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.media.MediaScannerConnection
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.view.View
+import androidx.core.view.drawToBitmap
 import dev.sunnyday.postcreator.core.app.rx.AppSchedulers
-import dev.sunnyday.postcreator.core.permissions.AppPermissionRequest
+import dev.sunnyday.postcreator.core.app.permissions.AppPermissionRequest
 import dev.sunnyday.postcreator.core.permissions.PermissionRequestInteractor
 import io.reactivex.Completable
 import io.reactivex.Single
@@ -19,24 +19,20 @@ import java.io.FileOutputStream
 import java.io.OutputStream
 import javax.inject.Inject
 
-internal class ViewAsImageSaverImpl @Inject constructor(
+internal class DrawViewToFileOperationImpl @Inject constructor(
     private val context: Context,
     private val permissionsInteractor: PermissionRequestInteractor,
     private val schedulers: AppSchedulers
-) : ViewAsImageSaver {
+) : DrawViewToFileOperation {
 
-    override fun save(view: View): Completable =
+    override fun drawToFile(view: View): Completable =
         permissionsInteractor.requirePermission(AppPermissionRequest.Storage)
             .andThen(drawViewToBitmap(view))
             .observeOn(schedulers.background)
             .flatMapCompletable(this::save)
 
     private fun drawViewToBitmap(view: View): Single<Bitmap> = Single.fromCallable {
-        val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        view.draw(canvas)
-
-        bitmap
+        view.drawToBitmap(Bitmap.Config.ARGB_8888)
     }
 
     private fun save(bitmap: Bitmap): Completable = Completable.fromAction {

@@ -18,7 +18,8 @@ import dev.sunnyday.postcreator.domain.backgrounds.BackgroundsRepository
 import dev.sunnyday.postcreator.domain.backgrounds.resolver.BackgroundResolver
 import dev.sunnyday.postcreator.drawablechooser.DrawableChooserListener
 import dev.sunnyday.postcreator.drawablechooser.DrawableItem
-import dev.sunnyday.postcreator.postcreator.saver.ViewAsImageSaver
+import dev.sunnyday.postcreator.postcreator.operation.AddBackgroundFromDeviceOperation
+import dev.sunnyday.postcreator.postcreator.operation.DrawViewToFileOperation
 import dev.sunnyday.postcreator.stickersboard.Sticker
 import dev.sunnyday.postcreator.stickersboard.StickersBoard
 import io.reactivex.disposables.CompositeDisposable
@@ -38,7 +39,10 @@ class PostCreatorFragment : DaggerFragment() {
     internal lateinit var backgroundsResolver: BackgroundResolver
 
     @Inject
-    internal lateinit var asImageSaver: ViewAsImageSaver
+    internal lateinit var viewToFileOperation: DrawViewToFileOperation
+
+    @Inject
+    internal lateinit var addBackgroundOperation: AddBackgroundFromDeviceOperation
 
     @Inject
     internal lateinit var schedulers: AppSchedulers
@@ -97,12 +101,8 @@ class PostCreatorFragment : DaggerFragment() {
             .let(dispose::add)
 
         drawableChooser.addListener(object : DrawableChooserListener {
-
-            override fun onSelected(item: DrawableItem) {
-                val background = backgroundsMap[item.tag] ?: return
-                onBackgroundChoosed(background)
-            }
-
+            override fun onSelected(item: DrawableItem) = onBackgroundDrawableItemSelected(item)
+            override fun onAddClick() = onAddBackgroundRequested()
         })
     }
 
@@ -122,8 +122,9 @@ class PostCreatorFragment : DaggerFragment() {
         drawableChooser.selectedPosition = currentSelected?.let(backgrounds::indexOf) ?: 0
     }
 
-    private fun onBackgroundChoosed(background: Background) {
+    private fun onBackgroundDrawableItemSelected(item: DrawableItem) {
         val context = context ?: return
+        val background = backgroundsMap[item.tag] ?: return
 
         creatorView.background = backgroundsResolver.resolve(background)
 
@@ -133,6 +134,12 @@ class PostCreatorFragment : DaggerFragment() {
         } else {
             creatorView.setActionsBorderWidth(0)
         }
+    }
+
+    private fun onAddBackgroundRequested() {
+        addBackgroundOperation.execute()
+            .subscribeBy()
+            .let(dispose::add)
     }
 
     private fun chooserItemForBackground(background: Background): DrawableItem =
@@ -188,7 +195,7 @@ class PostCreatorFragment : DaggerFragment() {
         saveButton.setOnClickListener {
             creatorView.isEnabled = false
 
-            asImageSaver.save(creatorView)
+            viewToFileOperation.drawToFile(creatorView)
                 .observeOn(schedulers.ui)
                 .doFinally { creatorView.isEnabled = true }
                 .subscribeBy(
