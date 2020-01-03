@@ -9,23 +9,27 @@ import dev.sunnyday.postcreator.core.common.android.Dimen
 import dev.sunnyday.postcreator.postcreatorboard.PostCreatorBoardView
 import dev.sunnyday.postcreator.postcreatorboard.decorations.RoundedColorFillDecorator
 import dev.sunnyday.postcreator.postcreatorboard.decorations.TextDecorator
+import javax.inject.Inject
 
-internal class TextStyleSwitcher(private val context: Context) {
+internal class TextStyleSwitcher @Inject constructor(private val context: Context) {
 
     private val textStyles: List<DecoratedTextStyle>
-    private var activeTextStyleIndex = -1
+    var activeTextStyleIndex = 0
 
     init {
         textStyles = listOf(
             DecoratedTextStyle(
+                0L,
                 textColor = Color.BLACK,
                 decorations = emptyList()
             ),
             DecoratedTextStyle(
+                1L,
                 textColor = Color.BLACK,
                 decorations = listOf(roundedWhiteTextDecorator())
             ),
             DecoratedTextStyle(
+                2L,
                 textColor = Color.WHITE,
                 decorations = listOf(roundedSemiWhiteTextDecorator())
             )
@@ -55,6 +59,10 @@ internal class TextStyleSwitcher(private val context: Context) {
 
     fun applyNextStyle(creatorView: PostCreatorBoardView) {
         activeTextStyleIndex = (activeTextStyleIndex + 1) % textStyles.size
+        applyStyle(creatorView)
+    }
+
+    fun applyStyle(creatorView: PostCreatorBoardView) {
         val activeStyle = textStyles.getOrNull(activeTextStyleIndex) ?: return
         creatorView.textColor = activeStyle.textColor
         creatorView.setTextDecorators(activeStyle.decorations)

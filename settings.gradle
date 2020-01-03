@@ -20,6 +20,7 @@ include ':domain'
 project(':domain').projectDir = new File('source/domain')
 
 include ':domain:domain-backgrounds'
+include ':domain:domain-stickers'
 
 // endregion
 

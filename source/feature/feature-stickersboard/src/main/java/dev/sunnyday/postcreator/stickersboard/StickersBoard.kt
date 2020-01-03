@@ -26,9 +26,9 @@ import kotlin.math.min
 
 class StickersBoard private constructor(
     context: Context,
-    private val stickers: List<Sticker>,
+    private val stickers: List<StickerBoardItem>,
     private val targetRectProvider: (() -> Rect)? = null,
-    private val callback: (Sticker) -> Unit
+    private val callback: (StickerBoardItem) -> Unit
 ) : BottomSheetDialog(context) {
 
     private val adapter = StickersBoardAdapter(onItemClick = this::onStickerSelected)
@@ -86,7 +86,7 @@ class StickersBoard private constructor(
         }
     }
 
-    private fun onStickerSelected(sticker: Sticker, stickerView: ImageView) {
+    private fun onStickerSelected(sticker: StickerBoardItem, stickerView: ImageView) {
         val contentRoot = findParent(stickerView) { it.id == android.R.id.content }
 
         if (contentRoot == null || targetRectProvider == null) {
@@ -142,9 +142,9 @@ class StickersBoard private constructor(
 
         fun show(
             context: Context,
-            stickers: List<Sticker>,
+            stickers: List<StickerBoardItem>,
             stickerRectProvider: (() -> Rect)? = null,
-            callback: (Sticker) -> Unit
+            callback: (StickerBoardItem) -> Unit
         ) = StickersBoard(context, stickers, stickerRectProvider, callback)
             .also(StickersBoard::show)
 

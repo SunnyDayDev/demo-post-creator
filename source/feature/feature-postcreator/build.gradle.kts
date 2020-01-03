@@ -49,6 +49,7 @@ dependencies {
     implementation(project(PostCreator.Core.activityForResult))
     implementation(project(PostCreator.Core.app))
     implementation(project(PostCreator.Domain.backgrounds))
+    implementation(project(PostCreator.Domain.stickers))
     implementation(project(PostCreator.Feature.postCreatorBoard))
     implementation(project(PostCreator.Feature.drawableChooser))
     implementation(project(PostCreator.Feature.stickersBoard))
