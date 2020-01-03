@@ -28,6 +28,7 @@ import dev.sunnyday.postcreator.drawablechooser.DrawableChooserListener
 import dev.sunnyday.postcreator.drawablechooser.DrawableItem
 import dev.sunnyday.postcreator.postcreator.operation.AddBackgroundFromDeviceOperation
 import dev.sunnyday.postcreator.postcreator.operation.DrawViewToFileOperation
+import dev.sunnyday.postcreator.postcreatorboard.PostCreatorBoardView
 import dev.sunnyday.postcreator.postcreatorboard.PostCreatorImage
 import dev.sunnyday.postcreator.stickersboard.StickerBoardItem
 import dev.sunnyday.postcreator.stickersboard.StickersBoard
@@ -283,6 +284,19 @@ class PostCreatorFragment : DaggerFragment() {
                 .subscribeBy(onError = this::checkPermissionError)
                 .let(dispose::add)
         }
+
+        updateSaveButtonState()
+        creatorView.addTextChangedListener(object : PostCreatorBoardView.TextChangedListener {
+            override fun onTextChanged(text: String) = updateSaveButtonState()
+        })
+    }
+
+    private fun updateSaveButtonState() {
+        val shouldBeEnabled = creatorView.text.isNotEmpty()
+        if (shouldBeEnabled != saveButton.isEnabled) {
+            saveButton.isEnabled = shouldBeEnabled
+            saveButton.alpha = if (shouldBeEnabled) 1.0f else 0.48f
+        }
     }
 
     private fun checkPermissionError(error: Throwable) {
@@ -311,9 +325,11 @@ class PostCreatorFragment : DaggerFragment() {
         dispose.clear()
     }
 
-    private fun setupSavedStateManaging(name: String,
-                                        restoreState: (Bundle) -> Unit,
-                                        saveState: Bundle.() -> Unit) {
+    private fun setupSavedStateManaging(
+        name: String,
+        restoreState: (Bundle) -> Unit,
+        saveState: Bundle.() -> Unit
+    ) {
         savedStateRegistry.apply {
             consumeRestoredStateForKey(name)?.let(restoreState)
             registerSavedStateProvider(name) {
