@@ -39,6 +39,9 @@ class PostCreatorBoardView @JvmOverloads constructor(
     val images: List<PostCreatorImage>
         get() = imagesMap.values.toList()
 
+    val text: String
+        get() = textInput.text.toString()
+
     private var actionsColors: ColorStateList = ColorStateList.valueOf(Color.BLACK)
     private var actionsBorderWidth: Int = Dimen.dp(2, context).toInt()
 
@@ -53,6 +56,8 @@ class PostCreatorBoardView @JvmOverloads constructor(
     private val deleteActionRadius = Dimen.dp(36, context)
     private var isDeleteActionActive = false
 
+    private var textChangedListeners = mutableSetOf<TextChangedListener>()
+
     override fun setEnabled(enabled: Boolean) {
         super.setEnabled(enabled)
         textInput.isEnabled = enabled
@@ -66,7 +71,7 @@ class PostCreatorBoardView @JvmOverloads constructor(
         deleteButton.isVisible = false
 
         attrs?.let(this::applyAttributes)
-        initTextDecorationUpdating()
+        initTextChangingTracking()
     }
 
     private fun applyAttributes(attrs: AttributeSet) {
@@ -85,8 +90,10 @@ class PostCreatorBoardView @JvmOverloads constructor(
         }
     }
 
-    private fun initTextDecorationUpdating() {
+    private fun initTextChangingTracking() {
         textInput.addTextChangedListener {
+            notifyTextChanged(it?.toString() ?: "")
+
             // TODO: https://github.com/SunnyDayDev/demo-post-creator/projects/1#card-31003227
             postDelayed(10, this::decorateText)
         }
@@ -111,12 +118,14 @@ class PostCreatorBoardView @JvmOverloads constructor(
         textDecorator.setTextDecorators(decorators)
     }
 
-    fun addTextDecorator(decorator: TextDecorator) {
-        textDecorator.addTextDecorator(decorator)
+    fun addTextChangedListener(listener: TextChangedListener) {
+        textChangedListeners.add(listener)
     }
 
-    fun removeTextDecorator(decorator: TextDecorator) {
-        textDecorator.removeTextDecorator(decorator)
+    private fun notifyTextChanged(text: String) {
+        textChangedListeners.forEach {
+            it.onTextChanged(text)
+        }
     }
 
     fun addImage(image: PostCreatorImage) {
@@ -322,16 +331,6 @@ class PostCreatorBoardView @JvmOverloads constructor(
             invalidateDecoration()
         }
 
-        fun addTextDecorator(decorator: TextDecorator) {
-            decorators.add(decorator)
-            invalidateDecoration()
-        }
-
-        fun removeTextDecorator(decorator: TextDecorator) {
-            decorators.remove(decorator)
-            invalidateDecoration()
-        }
-
         fun invalidateDecoration() {
             if (lines.isEmpty()) {
                 removeDecoration()
@@ -363,6 +362,12 @@ class PostCreatorBoardView @JvmOverloads constructor(
             decoration?.recycle()
             decoration = null
         }
+
+    }
+
+    interface TextChangedListener {
+
+        fun onTextChanged(text: String)
 
     }
 
