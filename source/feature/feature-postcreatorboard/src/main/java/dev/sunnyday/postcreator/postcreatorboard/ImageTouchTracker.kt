@@ -4,6 +4,7 @@ import android.graphics.Point
 import android.graphics.PointF
 import android.view.MotionEvent
 import androidx.core.graphics.toPoint
+import timber.log.Timber
 import kotlin.math.atan2
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -18,11 +19,11 @@ internal class ImageTouchTracker(
     private var anchorSize: Int? = null
     private var anchorAngle: Float? = null
 
-    private var firstPointerIndex: Int? = null
+    private var firstPointerId: Int? = null
     private var firstStartPoint: PointF? = null
     private var firstActualPoint: PointF? = null
 
-    private var secondPointerIndex: Int? = null
+    private var secondPointerId: Int? = null
     private var secondTouchPoint: PointF? = null
     private var secondActualPoint: PointF? = null
 
@@ -35,74 +36,96 @@ internal class ImageTouchTracker(
 
     fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                firstPointerIndex = event.actionIndex
-
-                val touchPoint = getTouchPoint(event.actionIndex, event)
-                firstStartPoint = touchPoint
-                firstActualPoint = touchPoint
-
-                anchorSize = image.rect.width()
-                anchorPoint =
-                    Point(image.rect.left, image.rect.top)
-            }
+            MotionEvent.ACTION_DOWN,
             MotionEvent.ACTION_POINTER_DOWN -> {
-                if(secondPointerIndex == null) {
-                    secondPointerIndex = event.actionIndex
-
-                    val touchPoint = getTouchPoint(event.actionIndex, event)
-                    secondTouchPoint = touchPoint
-                    secondActualPoint = touchPoint
-
-                    startSize = image.rect.width()
-
-                    val firstTouchPoint = firstActualPoint ?: return true
-                    startDistance = getDistanceBetweenPoints(firstTouchPoint, touchPoint)
-                    startAngle = getAngleBetweenPoints(firstTouchPoint, touchPoint)
-                    anchorAngle = image.rotation
-                } else {
-                    return true
+                when {
+                    firstPointerId == null -> initFirstPointer(event)
+                    secondPointerId == null -> initSecondPointer(event)
+                    else -> return true
                 }
             }
 
             MotionEvent.ACTION_MOVE -> {
-                val firstPointerIndex = firstPointerIndex
-                if (firstPointerIndex != null) {
-                    firstActualPoint = getTouchPoint(firstPointerIndex, event)
-                }
+                when {
+                    firstPointerId == null -> initFirstPointer(event)
+                    secondPointerId == null && event.pointerCount > 1 -> initSecondPointer(event)
+                    else -> {
+                        firstPointerId?.let {
+                            firstActualPoint = getTouchPoint(it, event)
+                        }
+                        secondPointerId?.let {
+                            secondActualPoint = getTouchPoint(it, event)
+                        }
 
-                val secondPointerIndex = secondPointerIndex
-                if (secondPointerIndex != null) {
-                    secondActualPoint = getTouchPoint(secondPointerIndex, event)
+                        onMoved()
+                    }
                 }
-
-                onMoved()
             }
 
             MotionEvent.ACTION_UP,
-            MotionEvent.ACTION_CANCEL -> {
-                if (firstActualPoint != null) {
-                    onCompleteCallback(firstActualPoint!!.toPoint(), image)
-                }
-
-                firstPointerIndex = null
-                firstStartPoint = null
-                firstActualPoint = null
-                secondPointerIndex = null
-                secondTouchPoint = null
-                secondActualPoint = null
-                startDistance = null
-                return false
-            }
             MotionEvent.ACTION_POINTER_UP -> {
-                secondPointerIndex = null
-                secondTouchPoint = null
-                secondActualPoint = null
-                startDistance = null
+                when (event.getPointerId(event.actionIndex)) {
+                    firstPointerId -> {
+                        val point = firstActualPoint
+                        if (point != null) {
+                            onCompleteCallback(point.toPoint(), image)
+                        }
+
+                        firstPointerId = null
+                        firstStartPoint = null
+                        firstActualPoint = null
+                        secondPointerId = null
+                        secondTouchPoint = null
+                        secondActualPoint = null
+                        startDistance = null
+                        return false
+                    }
+                    secondPointerId -> {
+                        secondPointerId = null
+                        secondTouchPoint = null
+                        secondActualPoint = null
+                        startDistance = null
+                    }
+                }
             }
         }
 
         return true
+    }
+
+    private fun initFirstPointer(event: MotionEvent) {
+        val pointerId = event.getPointerId(0)
+        firstPointerId = pointerId
+
+        val touchPoint = getTouchPoint(pointerId, event)
+        firstStartPoint = touchPoint
+        firstActualPoint = touchPoint
+
+        anchorSize = image.rect.width()
+        anchorPoint =
+            Point(image.rect.left, image.rect.top)
+    }
+
+    private fun initSecondPointer(event: MotionEvent) {
+        val pointerId = (0 until event.pointerCount)
+            .map(event::getPointerId)
+            .find { it != firstPointerId }
+            ?: return
+
+        secondPointerId = pointerId
+
+        Timber.d("First pointer initialized: $secondPointerId")
+
+        val touchPoint = getTouchPoint(pointerId, event)
+        secondTouchPoint = touchPoint
+        secondActualPoint = touchPoint
+
+        startSize = image.rect.width()
+
+        val firstTouchPoint = firstActualPoint ?: return
+        startDistance = getDistanceBetweenPoints(firstTouchPoint, touchPoint)
+        startAngle = getAngleBetweenPoints(firstTouchPoint, touchPoint)
+        anchorAngle = image.rotation
     }
 
     private fun onMoved() {
@@ -142,8 +165,10 @@ internal class ImageTouchTracker(
         onMovedCallback(firstActualPoint.toPoint(), image)
     }
 
-    private fun getTouchPoint(index: Int, event: MotionEvent): PointF =
-        PointF(event.getX(index), event.getY(index))
+    private fun getTouchPoint(id: Int, event: MotionEvent): PointF {
+        val index = event.findPointerIndex(id)
+        return PointF(event.getX(index), event.getY(index))
+    }
 
     companion object {
 
