@@ -152,6 +152,7 @@ object PostCreator {
     object Domain {
 
         const val backgrounds = ":domain:domain-backgrounds"
+        const val stickers = ":domain:domain-stickers"
 
     }
 

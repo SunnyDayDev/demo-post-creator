@@ -1,24 +1,31 @@
 plugins {
-    id("com.android.application")
+    id("com.android.library")
     id("kotlin-android")
-    id("kotlin-android-extensions")
     kotlin("kapt")
 }
 
 android {
     compileSdkVersion(Android.targetSdk)
     buildToolsVersion(Android.buildToolVersion)
-    
+
     defaultConfig {
-        applicationId = "dev.sunnyday.postcreator"
         minSdkVersion(Android.minSdk)
         targetSdkVersion(Android.targetSdk)
         versionCode = 1
         versionName = "1.0"
-        
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = mapOf(
+                    "room.schemaLocation" to "$projectDir/schemas",
+                    "room.incremental" to "true")
+            }
+        }
     }
-    
+
     buildTypes {
         named("release"){
             isMinifyEnabled = false
@@ -34,25 +41,18 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
-    
+
 }
 
 dependencies {
     implementation(Kotlin.stdlibJdk8)
 
-    Dagger.addTo(this, useAndroid = true)
     Rx.addTo(this)
+    Dagger.addTo(this)
     Room.addTo(this)
 
     implementation(project(PostCreator.Core.common))
-    implementation(project(PostCreator.Core.ui))
-    implementation(project(PostCreator.Core.permissions))
-    implementation(project(PostCreator.Core.activityForResult))
     implementation(project(PostCreator.Core.app))
-    implementation(project(PostCreator.Domain.backgrounds))
-    implementation(project(PostCreator.Domain.stickers))
-    implementation(project(PostCreator.Feature.postCreator))
-    implementation(project(PostCreator.Feature.drawableChooser))
 
     testImplementation(Test.junit)
     androidTestImplementation(Test.junitExt)

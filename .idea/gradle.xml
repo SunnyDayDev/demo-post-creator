@@ -20,6 +20,7 @@
             <option value="$PROJECT_DIR$/source/core/core-ui" />
             <option value="$PROJECT_DIR$/source/domain" />
             <option value="$PROJECT_DIR$/source/domain/domain-backgrounds" />
+            <option value="$PROJECT_DIR$/source/domain/domain-stickers" />
             <option value="$PROJECT_DIR$/source/feature" />
             <option value="$PROJECT_DIR$/source/feature/feature-drawablechooser" />
             <option value="$PROJECT_DIR$/source/feature/feature-postcreator" />

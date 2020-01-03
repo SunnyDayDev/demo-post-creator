@@ -12,16 +12,16 @@ import kotlinx.android.synthetic.main.stickersboard__item.view.*
 import kotlin.properties.Delegates
 
 internal class StickersBoardAdapter(
-    val onItemClick: (Sticker, ImageView) -> Unit
+    val onItemClick: (StickerBoardItem, ImageView) -> Unit
 ) : RecyclerView.Adapter<StickersBoardAdapter.StickerViewHolder>() {
 
-    var items: List<Sticker> by Delegates.observable(emptyList()) { _, old, new ->
+    var items: List<StickerBoardItem> by Delegates.observable(emptyList()) { _, old, new ->
         if (old == new) return@observable
         val diff = calculateDiff(old, new)
         diff.dispatchUpdatesTo(this)
     }
 
-    private fun calculateDiff(old: List<Sticker>, new: List<Sticker>) =
+    private fun calculateDiff(old: List<StickerBoardItem>, new: List<StickerBoardItem>) =
         DiffUtil.calculateDiff(object : DiffUtil.Callback() {
 
             override fun getOldListSize(): Int = old.size
@@ -29,7 +29,7 @@ internal class StickersBoardAdapter(
             override fun getNewListSize(): Int = new.size
 
             override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
-                old[oldItemPosition].id == new[newItemPosition].id
+                old[oldItemPosition] == new[newItemPosition]
 
             override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
                 old[oldItemPosition] == new[newItemPosition]
@@ -50,10 +50,10 @@ internal class StickersBoardAdapter(
 
     class StickerViewHolder(
         private val view: View,
-        private val onItemClick: (Sticker, ImageView) -> Unit
+        private val onItemClick: (StickerBoardItem, ImageView) -> Unit
     ) : RecyclerView.ViewHolder(view) {
 
-        fun bind(sticker: Sticker) {
+        fun bind(sticker: StickerBoardItem) {
             val glide: RequestManager
             try {
                 glide = Glide.with(view.context)

@@ -15,6 +15,7 @@ import dev.sunnyday.postcreator.core.app.di.CoreAppModule
 import dev.sunnyday.postcreator.core.permissions.di.CorePermissionsModule
 import dev.sunnyday.postcreator.core.ui.di.CoreUIModule
 import dev.sunnyday.postcreator.domain.backgrounds.di.DomainBackgroundsModule
+import dev.sunnyday.postcreator.domain.stickers.di.DomainStickersModule
 import javax.inject.Singleton
 
 @Singleton
@@ -25,6 +26,7 @@ import javax.inject.Singleton
         CorePermissionsModule::class,
         CoreActivityForResultModule::class,
         DomainBackgroundsModule::class,
+        DomainStickersModule::class,
         AppModule::class,
         AndroidInjectionModule::class
     ])

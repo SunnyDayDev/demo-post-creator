@@ -6,7 +6,6 @@ import android.content.res.ColorStateList
 import android.content.res.TypedArray
 import android.graphics.*
 import android.graphics.drawable.GradientDrawable
-import android.net.Uri
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -15,7 +14,6 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.annotation.ColorInt
 import androidx.annotation.Dimension
-import androidx.core.graphics.toPoint
 import androidx.core.view.isVisible
 import androidx.core.view.postDelayed
 import androidx.core.view.updateLayoutParams
@@ -24,7 +22,7 @@ import com.bumptech.glide.Glide
 import dev.sunnyday.postcreator.core.common.android.Dimen
 import dev.sunnyday.postcreator.postcreatorboard.decorations.TextDecorator
 import kotlinx.android.synthetic.main.postcreatorboard__view.view.*
-import kotlin.math.atan2
+import java.util.*
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -38,10 +36,14 @@ class PostCreatorBoardView @JvmOverloads constructor(
         get() = textInput.currentTextColor
         set(@ColorInt value) { textInput.setTextColor(value) }
 
+    val images: List<PostCreatorImage>
+        get() = imagesMap.values.toList()
+
     private var actionsColors: ColorStateList = ColorStateList.valueOf(Color.BLACK)
     private var actionsBorderWidth: Int = Dimen.dp(2, context).toInt()
 
-    private val images = mutableListOf<ImageView>()
+    private val imageViewsMap = mutableMapOf<UUID, ImageView>()
+    private val imagesMap = mutableMapOf<UUID, PostCreatorImage>()
 
     private var activeImageTouchTracker: ImageTouchTracker? = null
 
@@ -117,24 +119,35 @@ class PostCreatorBoardView @JvmOverloads constructor(
         textDecorator.removeTextDecorator(decorator)
     }
 
-    fun addImage(uri: Uri, rect: Rect? = null) {
-        val image = ImageView(context)
-        images.add(0, image)
-        addView(image, indexOfChild(textDecorator))
+    fun addImage(image: PostCreatorImage) {
+        if (imageViewsMap.containsKey(image.id))
+            return
 
-        image.layoutParams = if (rect == null) {
-            val size = Dimen.dp(92, context).toInt()
-            LayoutParams(size, size)
-        } else {
-            LayoutParams(rect.width(), rect.height()).apply {
-                topMargin = rect.top
-                leftMargin = rect.left
-            }
-        }
+        val imageView = layoutImage(image)
+        imageViewsMap[image.id] = imageView
+        imagesMap[image.id] = image
 
         Glide.with(context)
-            .load(uri)
-            .into(image)
+            .load(image.source)
+            .into(imageView)
+    }
+
+    private fun layoutImage(image: PostCreatorImage): ImageView {
+        val imageView = ImageView(context).apply {
+            layoutParams = LayoutParams(0, 0)
+        }
+
+        val rect = image.rect
+
+        if (rect.isEmpty) {
+            val size = Dimen.dp(92, context).toInt()
+            rect.set(0, 0, size, size)
+        }
+
+        updateImageView(imageView, image)
+
+        addView(imageView, indexOfChild(textDecorator))
+        return imageView
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
@@ -155,13 +168,34 @@ class PostCreatorBoardView @JvmOverloads constructor(
 
     private fun findTouchTracker(event: MotionEvent): ImageTouchTracker? {
         val image = findImageUnderTouch(event) ?: return null
-        return ImageTouchTracker(image, this::onImageMoved, this::onImageInteractionCompleted)
+        return ImageTouchTracker(
+            image,
+            this::onImageMoved,
+            this::onImageInteractionCompleted
+        )
     }
 
-    private fun onImageMoved(touchPoint: Point, image: ImageView) {
+    private fun onImageMoved(touchPoint: Point, image: PostCreatorImage) {
+        val imageView = imageViewsMap[image.id] ?: return
+
+        updateImageView(imageView, image)
         setDeleteActiveActive(isDeleteAction(touchPoint))
 
         deleteButton.isVisible = true
+    }
+
+    private fun updateImageView(imageView: ImageView, image: PostCreatorImage) {
+        imageView.updateLayoutParams<LayoutParams> {
+            width = image.rect.width()
+            height = image.rect.height()
+
+            setMargins(
+                image.rect.left,
+                image.rect.top,
+                0, 0)
+        }
+
+        imageView.rotation = image.rotation
     }
 
     private fun isDeleteAction(touchPoint: Point): Boolean {
@@ -194,25 +228,33 @@ class PostCreatorBoardView @JvmOverloads constructor(
         }
     }
 
-    private fun onImageInteractionCompleted(touchPoint: Point, image: ImageView) {
+    private fun onImageInteractionCompleted(touchPoint: Point, image: PostCreatorImage) {
         activeImageTouchTracker = null
         deleteButton.isVisible = false
 
         if (isDeleteAction(touchPoint)) {
-            images.remove(image)
-            removeView(image)
+            deleteImage(image)
         }
     }
 
-    private fun findImageUnderTouch(event: MotionEvent): ImageView? {
+    private fun deleteImage(image: PostCreatorImage) {
+        imagesMap.remove(image.id)
+
+        imageViewsMap.remove(image.id)
+            ?.let(this::removeView)
+    }
+
+    private fun findImageUnderTouch(event: MotionEvent): PostCreatorImage? {
         val rect = Rect()
         val x = event.rawX.toInt()
         val y = event.rawY.toInt()
 
-        return images.firstOrNull {
-            it.getGlobalVisibleRect(rect)
-            rect.contains(x, y)
-        }
+        return imageViewsMap.entries
+            .firstOrNull { (_, imageView) ->
+                imageView.getGlobalVisibleRect(rect)
+                rect.contains(x, y)
+            }
+            ?.let { (id, _) -> imagesMap[id]}
     }
 
     // TODO: https://github.com/SunnyDayDev/demo-post-creator/projects/1#card-31003220
@@ -324,171 +366,7 @@ class PostCreatorBoardView @JvmOverloads constructor(
 
     }
 
-    private class ImageTouchTracker(
-        private val image: ImageView,
-        onMoved: (Point, ImageView) -> Unit,
-        onComplete: (Point, ImageView) -> Unit
-    ) {
-
-        private var anchorPoint: Point? = null
-        private var anchorSize: Int? = null
-        private var anchorAngle: Float? = null
-
-        private var firstPointerIndex: Int? = null
-        private var firstStartPoint: PointF? = null
-        private var firstActualPoint: PointF? = null
-
-        private var secondPointerIndex: Int? = null
-        private var secondTouchPoint: PointF? = null
-        private var secondActualPoint: PointF? = null
-
-        private var startSize: Int? = null
-        private var startDistance: Float? = null
-        private var startAngle: Float? = null
-
-        private val onMovedCallback = onMoved
-        private val onCompleteCallback = onComplete
-
-        fun onTouchEvent(event: MotionEvent): Boolean {
-            when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> {
-                    firstPointerIndex = event.actionIndex
-
-                    val touchPoint = getTouchPoint(event.actionIndex, event)
-                    firstStartPoint = touchPoint
-                    firstActualPoint = touchPoint
-
-                    anchorSize = image.width
-                    anchorPoint = (image.layoutParams as LayoutParams).let {
-                        Point(it.leftMargin, it.topMargin)
-                    }
-                }
-                MotionEvent.ACTION_POINTER_DOWN -> {
-                    if(secondPointerIndex == null) {
-                        secondPointerIndex = event.actionIndex
-
-                        val touchPoint = getTouchPoint(event.actionIndex, event)
-                        secondTouchPoint = touchPoint
-                        secondActualPoint = touchPoint
-
-                        startSize = image.width
-
-                        val firstTouchPoint = firstActualPoint ?: return true
-                        startDistance = getDistanceBetweenPoints(firstTouchPoint, touchPoint)
-                        startAngle = getAngleBetweenPoints(firstTouchPoint, touchPoint)
-                        anchorAngle = image.rotation
-                    } else {
-                        return true
-                    }
-                }
-
-                MotionEvent.ACTION_MOVE -> {
-                    val firstPointerIndex = firstPointerIndex
-                    if (firstPointerIndex != null) {
-                        firstActualPoint = getTouchPoint(firstPointerIndex, event)
-                    }
-
-                    val secondPointerIndex = secondPointerIndex
-                    if (secondPointerIndex != null) {
-                        secondActualPoint = getTouchPoint(secondPointerIndex, event)
-                    }
-
-                    onMoved()
-                }
-
-                MotionEvent.ACTION_UP,
-                MotionEvent.ACTION_CANCEL -> {
-                    if (firstActualPoint != null) {
-                        onCompleteCallback(firstActualPoint!!.toPoint(), image)
-                    }
-
-                    firstPointerIndex = null
-                    firstStartPoint = null
-                    firstActualPoint = null
-                    secondPointerIndex = null
-                    secondTouchPoint = null
-                    secondActualPoint = null
-                    startDistance = null
-                    return false
-                }
-                MotionEvent.ACTION_POINTER_UP -> {
-                    secondPointerIndex = null
-                    secondTouchPoint = null
-                    secondActualPoint = null
-                    startDistance = null
-                }
-            }
-
-            return true
-        }
-
-        private fun onMoved() {
-            val anchorPoint = anchorPoint ?:return
-            val firstActualPoint = firstActualPoint ?:return
-            val firstStartPoint = firstStartPoint ?:return
-            val anchorSize = anchorSize ?: return
-
-            var size = image.width
-
-            val secondActualPoint = secondActualPoint
-
-            if (secondActualPoint != null) {
-
-                val startDistance = startDistance
-                val startSize = startSize
-
-                if (startSize != null && startDistance != null) {
-                    val actualDistance = getDistanceBetweenPoints(firstActualPoint, secondActualPoint)
-                    size = (startSize * actualDistance / startDistance).toInt()
-                }
-
-                val startAngle = startAngle
-                val anchorAngle = anchorAngle
-                if (startAngle != null && anchorAngle != null) {
-                    val angle = getAngleBetweenPoints(firstActualPoint, secondActualPoint)
-                    image.rotation = anchorAngle + angle - startAngle
-                }
-
-            }
-
-            val sizeShift = (size - anchorSize) / 2
-
-            image.updateLayoutParams<LayoutParams> {
-                width = size
-                height = size
-
-                setMargins(
-                    anchorPoint.x + (firstActualPoint.x - firstStartPoint.x).toInt() - sizeShift,
-                    anchorPoint.y + (firstActualPoint.y - firstStartPoint.y).toInt() - sizeShift,
-                    0, 0)
-
-            }
-
-            onMovedCallback(firstActualPoint.toPoint(), image)
-        }
-
-        private fun getTouchPoint(index: Int, event: MotionEvent): PointF =
-            PointF(
-                event.getX(index),
-                event.getY(index))
-
-        private fun getAngleBetweenPoints(f: PointF, s: PointF): Float {
-            val atan = atan2((f.y - s.y).toDouble(), (f.x - s.x).toDouble())
-            val angle = Math.toDegrees(atan).toFloat()
-
-            return if (angle < 0) {
-                angle + 360f
-            } else {
-                angle
-            }
-        }
-
-    }
-
     companion object {
-
-        private fun getDistanceBetweenPoints(f: PointF, s: PointF): Float =
-            sqrt((s.x - f.x).pow(2) + (s.y - f.y).pow(2))
 
         private fun getDistanceBetweenPoints(f: Point, s: Point): Float =
             sqrt((s.x - f.x).toFloat().pow(2) + (s.y - f.y).toFloat().pow(2))
