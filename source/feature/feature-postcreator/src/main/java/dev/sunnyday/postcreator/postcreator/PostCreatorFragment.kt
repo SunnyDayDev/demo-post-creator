@@ -267,7 +267,7 @@ class PostCreatorFragment : DaggerFragment() {
 
         val stickerWindowRect = Rect()
         creatorView.getGlobalVisibleRect(stickerWindowRect)
-        stickerWindowRect.offset(stickerRect.left, stickerRect.top)
+        stickerWindowRect.offset(stickerRect.left, stickerRect.top - scrollableContent.scrollY)
         stickerWindowRect.right = stickerWindowRect.left + stickerRect.width()
         stickerWindowRect.bottom = stickerWindowRect.top + stickerRect.height()
 
