@@ -1,6 +1,7 @@
 package dev.sunnyday.postcreator.drawablechooser
 
 import android.content.Context
+import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.FrameLayout
@@ -54,6 +55,13 @@ class DrawableChooser @JvmOverloads constructor(
         inflater.inflate(R.layout.backgroundswitcher__toolbar, this, true)
 
         list.adapter = adapter
+
+        if (isInEditMode) {
+            items = listOf(
+                DrawableItem { ColorDrawable(0xffff0000.toInt()) },
+                DrawableItem { ColorDrawable(0xff00ff00.toInt()) },
+                DrawableItem { ColorDrawable(0xff0000ff.toInt()) })
+        }
 
     }
 
