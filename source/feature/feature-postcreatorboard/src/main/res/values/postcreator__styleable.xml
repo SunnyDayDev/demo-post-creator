@@ -3,5 +3,8 @@
     <declare-styleable name="PostCreatorBoardView">
         <attr name="actionsColor" format="color"/>
         <attr name="actionsBorderWidth" format="dimension"/>
+        <attr name="hintTextColor" format="color"/>
+        <attr name="textColor" format="color"/>
+        <attr name="text" format="string"/>
     </declare-styleable>
 </resources>
