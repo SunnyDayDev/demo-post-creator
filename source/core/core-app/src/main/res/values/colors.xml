@@ -5,6 +5,7 @@
     <color name="colorAccent">#FF4276C1</color>
 
     <color name="textDark">#2C2D2E</color>
+    <color name="textLight">#FFF</color>
     <color name="textHintDark">#3D2C2D2E</color>
     <color name="textDecorationSemiWhite">#40FFFFFF</color>
 

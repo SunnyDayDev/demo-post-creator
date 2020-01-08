@@ -4,8 +4,8 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.RectF
 import androidx.annotation.ColorInt
-import androidx.core.content.ContextCompat
 import dev.sunnyday.postcreator.core.common.android.Dimen
+import dev.sunnyday.postcreator.core.common.android.compat
 import dev.sunnyday.postcreator.postcreatorboard.PostCreatorBoardView
 import dev.sunnyday.postcreator.postcreatorboard.decorations.RoundedColorFillDecorator
 import dev.sunnyday.postcreator.postcreatorboard.decorations.TextDecorator
@@ -20,19 +20,16 @@ internal class TextStyleSwitcher @Inject constructor(private val context: Contex
         textStyles = listOf(
             DecoratedTextStyle(
                 0L,
-                textColor = Color.BLACK,
-                decorations = emptyList()
-            ),
+                textColor = context.compat.getColor(R.color.textDark),
+                decorations = emptyList()),
             DecoratedTextStyle(
                 1L,
-                textColor = Color.BLACK,
-                decorations = listOf(roundedWhiteTextDecorator())
-            ),
+                textColor = context.compat.getColor(R.color.textDark),
+                decorations = listOf(roundedWhiteTextDecorator())),
             DecoratedTextStyle(
                 2L,
-                textColor = Color.WHITE,
-                decorations = listOf(roundedSemiWhiteTextDecorator())
-            )
+                textColor = context.compat.getColor(R.color.textLight),
+                decorations = listOf(roundedSemiWhiteTextDecorator()))
         )
     }
 
@@ -40,7 +37,7 @@ internal class TextStyleSwitcher @Inject constructor(private val context: Contex
         roundedCornerFillTextStyle(Color.WHITE)
 
     private fun roundedSemiWhiteTextDecorator(): TextDecorator {
-        val color = ContextCompat.getColor(context, R.color.textDecorationSemiWhite)
+        val color = context.compat.getColor(R.color.textDecorationSemiWhite)
         return roundedCornerFillTextStyle(color)
     }
 

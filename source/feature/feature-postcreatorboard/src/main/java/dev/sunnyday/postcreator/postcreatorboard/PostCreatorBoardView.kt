@@ -37,11 +37,17 @@ class PostCreatorBoardView @JvmOverloads constructor(
         get() = textInput.currentTextColor
         set(@ColorInt value) { textInput.setTextColor(value) }
 
+    @get:ColorInt
+    var hintTextColor: Int
+        get() = textInput.currentHintTextColor
+        set(@ColorInt value) { textInput.setHintTextColor(value) }
+
     val images: List<PostCreatorImage>
         get() = imagesMap.values.toList()
 
-    val text: String
+    var text: String
         get() = textInput.text.toString()
+        set(value) { textInput.setText(value) }
 
     private var actionsColors: ColorStateList = ColorStateList.valueOf(Color.BLACK)
     private var actionsBorderWidth: Int = Dimen.dp(2, context).toInt()
@@ -81,12 +87,29 @@ class PostCreatorBoardView @JvmOverloads constructor(
             .obtainStyledAttributes(attrs, R.styleable.PostCreatorBoardView, 0, 0)
 
         try {
-            attributes.getColorStateList(R.styleable.PostCreatorBoardView_actionsColor)
-                ?.let(this::setActionsColor)
+            if (attributes.hasValue(R.styleable.PostCreatorBoardView_actionsColor)) {
+                attributes.getColorStateList(R.styleable.PostCreatorBoardView_actionsColor)
+                    ?.let(this::setActionsColor)
+            }
 
-            attributes.getDimensionPixelSize(R.styleable.PostCreatorBoardView_actionsBorderWidth, -1)
-                .takeIf { it != -1 }
-                ?.let(this::setActionsBorderWidth)
+            if (attributes.hasValue(R.styleable.PostCreatorBoardView_actionsBorderWidth)) {
+                setActionsBorderWidth(attributes.getDimensionPixelSize(
+                    R.styleable.PostCreatorBoardView_actionsBorderWidth, 0))
+            }
+
+            if (attributes.hasValue(R.styleable.PostCreatorBoardView_textColor)) {
+                textColor = attributes.getColor(
+                    R.styleable.PostCreatorBoardView_textColor, textInput.currentTextColor)
+            }
+
+            if (attributes.hasValue(R.styleable.PostCreatorBoardView_hintTextColor)) {
+                hintTextColor = attributes.getColor(
+                    R.styleable.PostCreatorBoardView_hintTextColor, textInput.currentHintTextColor)
+            }
+
+            if (attributes.hasValue(R.styleable.PostCreatorBoardView_text)) {
+                text = attributes.getString(R.styleable.PostCreatorBoardView_text) ?: ""
+            }
         } finally {
             attributes.recycle()
         }
