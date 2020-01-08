@@ -66,9 +66,9 @@ class PostCreatorBoardView @JvmOverloads constructor(
 
     private var textChangedListeners = mutableSetOf<TextChangedListener>()
 
-    override fun setEnabled(enabled: Boolean) {
-        super.setEnabled(enabled)
-        textInput.isEnabled = enabled
+    override fun setEnabled(isEnabled: Boolean) {
+        super.setEnabled(isEnabled)
+        textInput.isEnabled = isEnabled
     }
 
     init {

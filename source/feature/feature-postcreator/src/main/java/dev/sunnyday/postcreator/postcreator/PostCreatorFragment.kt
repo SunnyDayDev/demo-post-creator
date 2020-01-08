@@ -8,8 +8,10 @@ import android.util.LongSparseArray
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.getSystemService
 import androidx.core.util.keyIterator
 import androidx.core.util.set
 import androidx.core.util.valueIterator
@@ -28,6 +30,7 @@ import dev.sunnyday.postcreator.drawablechooser.DrawableChooserListener
 import dev.sunnyday.postcreator.drawablechooser.DrawableItem
 import dev.sunnyday.postcreator.postcreator.operation.AddBackgroundFromDeviceOperation
 import dev.sunnyday.postcreator.postcreator.operation.DrawViewToFileOperation
+import dev.sunnyday.postcreator.postcreator.styles.TextStyleSwitcher
 import dev.sunnyday.postcreator.postcreatorboard.PostCreatorBoardView
 import dev.sunnyday.postcreator.postcreatorboard.PostCreatorImage
 import dev.sunnyday.postcreator.stickersboard.StickerBoardItem
@@ -276,7 +279,10 @@ class PostCreatorFragment : DaggerFragment() {
 
     private fun setupSaveButton() {
         saveButton.setOnClickListener {
+            view?.requestFocus()
             creatorView.isEnabled = false
+
+            hideKeyboard()
 
             saveOperation.drawToFile(creatorView)
                 .observeOn(schedulers.ui)
@@ -289,6 +295,19 @@ class PostCreatorFragment : DaggerFragment() {
         creatorView.addTextChangedListener(object : PostCreatorBoardView.TextChangedListener {
             override fun onTextChanged(text: String) = updateSaveButtonState()
         })
+    }
+
+    private fun hideKeyboard() {
+        val activity = this.activity
+            ?: return
+
+        val inputMethodManager: InputMethodManager = activity.getSystemService()
+            ?: return
+
+        val focusedView = activity.currentFocus?.windowToken
+            ?: return
+
+        inputMethodManager.hideSoftInputFromWindow(focusedView, 0)
     }
 
     private fun updateSaveButtonState() {

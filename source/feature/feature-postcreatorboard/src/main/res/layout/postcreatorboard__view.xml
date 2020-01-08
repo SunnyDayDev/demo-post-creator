@@ -19,6 +19,7 @@
         android:background="@null"
         android:hint="@string/postcreator__prompt__input_hint"
         android:textSize="24sp"
+        android:textColorHighlight="#909"
         app:autoSizeTextType="uniform"
         app:autoSizeMinTextSize="12sp"
         android:textStyle="bold"

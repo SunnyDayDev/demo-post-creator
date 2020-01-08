@@ -7,6 +7,8 @@ import dev.sunnyday.postcreator.postcreator.operation.AddBackgroundFromDeviceOpe
 import dev.sunnyday.postcreator.postcreator.operation.AddBackgroundFromDeviceOperationImpl
 import dev.sunnyday.postcreator.postcreator.operation.DrawViewToFileOperation
 import dev.sunnyday.postcreator.postcreator.operation.DrawViewToFileOperationImpl
+import dev.sunnyday.postcreator.postcreator.styles.FixedInMemoryTextStylesSource
+import dev.sunnyday.postcreator.postcreator.styles.TextStylesSource
 
 @AssistedModule
 @Module(includes = [
@@ -23,5 +25,8 @@ internal interface InternalPostCreatorModule {
 
     @Binds
     fun bindAddBackgroundFromDeviceOperation(impl: AddBackgroundFromDeviceOperationImpl): AddBackgroundFromDeviceOperation
+
+    @Binds
+    fun bindTextStylesSource(impl: FixedInMemoryTextStylesSource): TextStylesSource
 
 }
