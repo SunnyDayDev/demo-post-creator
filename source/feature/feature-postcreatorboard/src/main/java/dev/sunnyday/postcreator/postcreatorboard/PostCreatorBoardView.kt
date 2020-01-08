@@ -20,11 +20,12 @@ import androidx.core.view.updateLayoutParams
 import androidx.core.widget.addTextChangedListener
 import com.bumptech.glide.Glide
 import dev.sunnyday.postcreator.core.common.android.Dimen
+import dev.sunnyday.postcreator.core.common.math.MathUtil
 import dev.sunnyday.postcreator.postcreatorboard.decorations.TextDecorator
+import dev.sunnyday.postcreator.postcreatorboard.touchtracker.ImageTouchTrackerFactory
+import dev.sunnyday.postcreator.postcreatorboard.touchtracker.TouchTracker
 import kotlinx.android.synthetic.main.postcreatorboard__view.view.*
 import java.util.*
-import kotlin.math.pow
-import kotlin.math.sqrt
 
 
 class PostCreatorBoardView @JvmOverloads constructor(
@@ -48,11 +49,12 @@ class PostCreatorBoardView @JvmOverloads constructor(
     private val imageViewsMap = mutableMapOf<UUID, ImageView>()
     private val imagesMap = mutableMapOf<UUID, PostCreatorImage>()
 
-    private var activeImageTouchTracker: ImageTouchTracker? = null
+    private var activeTouchTracker: TouchTracker? = null
+    private val touchTrackerFactory = ImageTouchTrackerFactory()
 
     private val textDecorator = TextDecoratorView(context)
 
-    private var deleteButtonCenterPoint: Point = Point(0, 0)
+    private var deleteButtonCenterPoint: PointF = PointF(0f, 0f)
     private val deleteActionRadius = Dimen.dp(36, context)
     private var isDeleteActionActive = false
 
@@ -163,28 +165,27 @@ class PostCreatorBoardView @JvmOverloads constructor(
         super.onLayout(changed, left, top, right, bottom)
 
         deleteButtonCenterPoint.set(
-            deleteButton.left + deleteButton.width / 2,
-            deleteButton.top + deleteButton.height / 2)
+            deleteButton.left + deleteButton.width.toFloat() / 2,
+            deleteButton.top + deleteButton.height.toFloat() / 2)
     }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        val touchTracker = activeImageTouchTracker ?: findTouchTracker(event)
-            ?.also(this::activeImageTouchTracker::set)
+        val touchTracker = activeTouchTracker ?: findTouchTracker(event)
+            ?.also(this::activeTouchTracker::set)
 
         return touchTracker?.onTouchEvent(event) ?: super.onTouchEvent(event)
     }
 
-    private fun findTouchTracker(event: MotionEvent): ImageTouchTracker? {
+    private fun findTouchTracker(event: MotionEvent): TouchTracker? {
         val image = findImageUnderTouch(event) ?: return null
-        return ImageTouchTracker(
+        return touchTrackerFactory.create(
             image,
             this::onImageMoved,
-            this::onImageInteractionCompleted
-        )
+            this::onImageInteractionCompleted)
     }
 
-    private fun onImageMoved(touchPoint: Point, image: PostCreatorImage) {
+    private fun onImageMoved(touchPoint: PointF, image: PostCreatorImage) {
         val imageView = imageViewsMap[image.id] ?: return
 
         updateImageView(imageView, image)
@@ -207,8 +208,8 @@ class PostCreatorBoardView @JvmOverloads constructor(
         imageView.rotation = image.rotation
     }
 
-    private fun isDeleteAction(touchPoint: Point): Boolean {
-        val distanceToDelete = getDistanceBetweenPoints(deleteButtonCenterPoint, touchPoint)
+    private fun isDeleteAction(touchPoint: PointF): Boolean {
+        val distanceToDelete = MathUtil.getDistance(deleteButtonCenterPoint, touchPoint)
         return distanceToDelete <= deleteActionRadius
     }
 
@@ -233,12 +234,12 @@ class PostCreatorBoardView @JvmOverloads constructor(
         deleteButton.updateLayoutParams<LayoutParams> {
             width = size
             height = size
-            bottomMargin = this@PostCreatorBoardView.height - deleteButtonCenterPoint.y - size / 2
+            bottomMargin = this@PostCreatorBoardView.height - deleteButtonCenterPoint.y.toInt() - size / 2
         }
     }
 
-    private fun onImageInteractionCompleted(touchPoint: Point, image: PostCreatorImage) {
-        activeImageTouchTracker = null
+    private fun onImageInteractionCompleted(touchPoint: PointF, image: PostCreatorImage) {
+        activeTouchTracker = null
         deleteButton.isVisible = false
 
         if (isDeleteAction(touchPoint)) {
@@ -368,13 +369,6 @@ class PostCreatorBoardView @JvmOverloads constructor(
     interface TextChangedListener {
 
         fun onTextChanged(text: String)
-
-    }
-
-    companion object {
-
-        private fun getDistanceBetweenPoints(f: Point, s: Point): Float =
-            sqrt((s.x - f.x).toFloat().pow(2) + (s.y - f.y).toFloat().pow(2))
 
     }
 
