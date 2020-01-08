@@ -7,19 +7,19 @@
     tools:parentTag="android.widget.FrameLayout"
     tools:background="#aaa">
 
-    <EditText
+    <dev.sunnyday.postcreator.postcreatorboard.DecoratableEditText
         android:id="@+id/textInput"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_gravity="center"
-        android:layout_margin="32dp"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"
         android:inputType="textMultiLine"
         android:minEms="6"
         android:gravity="center"
         android:background="@null"
         android:hint="@string/postcreator__prompt__input_hint"
         android:textSize="24sp"
-        android:textColorHighlight="#909"
         app:autoSizeTextType="uniform"
         app:autoSizeMinTextSize="12sp"
         android:textStyle="bold"

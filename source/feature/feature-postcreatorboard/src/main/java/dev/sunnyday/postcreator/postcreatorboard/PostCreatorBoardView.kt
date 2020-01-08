@@ -9,13 +9,11 @@ import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.MotionEvent
-import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.annotation.ColorInt
 import androidx.annotation.Dimension
 import androidx.core.view.isVisible
-import androidx.core.view.postDelayed
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.addTextChangedListener
 import com.bumptech.glide.Glide
@@ -58,8 +56,6 @@ class PostCreatorBoardView @JvmOverloads constructor(
     private var activeTouchTracker: TouchTracker? = null
     private val touchTrackerFactory = ImageTouchTrackerFactory()
 
-    private val textDecorator = TextDecoratorView(context)
-
     private var deleteButtonCenterPoint: PointF = PointF(0f, 0f)
     private val deleteActionRadius = Dimen.dp(36, context)
     private var isDeleteActionActive = false
@@ -76,7 +72,6 @@ class PostCreatorBoardView @JvmOverloads constructor(
     init {
         val inflater = LayoutInflater.from(context)
         inflater.inflate(R.layout.postcreatorboard__view, this, true)
-        addView(textDecorator, 0)
 
         deleteButton.isVisible = false
 
@@ -120,9 +115,6 @@ class PostCreatorBoardView @JvmOverloads constructor(
     private fun initTextChangingTracking() {
         textInput.addTextChangedListener {
             notifyTextChanged(it?.toString() ?: "")
-
-            // TODO: https://github.com/SunnyDayDev/demo-post-creator/projects/1#card-31003227
-            postDelayed(10, this::decorateText)
         }
     }
 
@@ -142,7 +134,7 @@ class PostCreatorBoardView @JvmOverloads constructor(
     }
 
     fun setTextDecorators(decorators: List<TextDecorator>) {
-        textDecorator.setTextDecorators(decorators)
+        textInput.setTextDecorators(decorators)
     }
 
     // region: TextChangedListener
@@ -208,7 +200,7 @@ class PostCreatorBoardView @JvmOverloads constructor(
 
         updateImageView(imageView, image)
 
-        addView(imageView, indexOfChild(textDecorator))
+        addView(imageView, indexOfChild(textInput))
         return imageView
     }
 
@@ -329,104 +321,6 @@ class PostCreatorBoardView @JvmOverloads constructor(
     }
 
     // endregion
-
-    private fun decorateText() {
-        val layout = textInput.layout
-        val text = textInput.text.toString()
-
-        val lines = mutableListOf<TextDecorator.Line>()
-
-        for (i in 0 until layout.lineCount) {
-            val lineStart = layout.getLineStart(i)
-            val lineEnd = layout.getLineEnd(i).let {
-                if (it > lineStart && text[it - 1] == '\n') it - 1 else it
-            }
-
-            val lineText = text.substring(lineStart, lineEnd)
-
-            if (lineText.isEmpty()) continue
-
-            val lineWidth = layout.paint.measureText(lineText).toInt()
-            val widthDiff = (layout.width - lineWidth) / 2
-            val bounds = Rect()
-            layout.getLineBounds(i, bounds)
-            bounds.offset(textInput.left, textInput.top)
-            bounds.inset(widthDiff, 0)
-
-            lines.add(TextDecorator.Line(lineText, bounds))
-        }
-
-        textDecorator.decorate(lines)
-    }
-
-    private class TextDecoratorView @JvmOverloads constructor(
-        context: Context, attrs: AttributeSet?  = null, defStyle: Int = 0
-    ) : View(context, attrs, defStyle) {
-
-        private var lines: List<TextDecorator.Line> = emptyList()
-
-        private val decorators = mutableSetOf<TextDecorator>()
-        private var decoration: Bitmap? = null
-
-        override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-            super.onLayout(changed, left, top, right, bottom)
-            if (changed) {
-                invalidateDecoration()
-            }
-        }
-
-        override fun draw(canvas: Canvas) {
-            super.draw(canvas)
-
-            val decoration = this.decoration ?: return
-            canvas.drawBitmap(decoration, 0f, 0f, null)
-        }
-
-        fun decorate(lines: List<TextDecorator.Line>) {
-            this.lines = lines
-
-            invalidateDecoration()
-        }
-
-        fun setTextDecorators(decorators: List<TextDecorator>) {
-            this.decorators.clear()
-            this.decorators.addAll(decorators)
-            invalidateDecoration()
-        }
-
-        fun invalidateDecoration() {
-            if (lines.isEmpty()) {
-                removeDecoration()
-            } else {
-                createOrUpdateDecoration()
-            }
-
-            invalidate()
-        }
-
-        private fun createOrUpdateDecoration() {
-            val bitmap = decoration?.takeIf { it.width == width && it.height == height }
-                ?: Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-
-            val canvas = Canvas(bitmap)
-            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
-
-            decorators.forEach {
-                it.decorateText(canvas, lines)
-            }
-
-            if (bitmap != decoration) {
-                decoration?.recycle()
-                decoration = bitmap
-            }
-        }
-
-        private fun removeDecoration() {
-            decoration?.recycle()
-            decoration = null
-        }
-
-    }
 
     interface TextChangedListener {
 
