@@ -52,7 +52,8 @@
         android:layout_height="1dp"
         android:background="@color/divider"/>
 
-    <ScrollView
+    <dev.sunnyday.postcreator.postcreator.DisableableScrollView
+        android:id="@+id/scrollableContent"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -82,7 +83,8 @@
                 tools:background="@tools:sample/backgrounds/scenic[13]"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
-    </ScrollView>
+
+    </dev.sunnyday.postcreator.postcreator.DisableableScrollView>
 
     <View
         android:layout_width="match_parent"

@@ -157,6 +157,7 @@ class PostCreatorFragment : DaggerFragment() {
         setupDrawableChooser()
         setupStickersButton()
         setupSaveButton()
+        setupScrollableContent()
     }
 
     private fun updateCreatorViewSize() {
@@ -316,6 +317,20 @@ class PostCreatorFragment : DaggerFragment() {
             saveButton.isEnabled = shouldBeEnabled
             saveButton.alpha = if (shouldBeEnabled) 1.0f else 0.48f
         }
+    }
+
+    private fun setupScrollableContent() {
+        creatorView.addImageStateListener(object : PostCreatorBoardView.ImageStateListener {
+
+            override fun onStartTrackingImage() {
+                scrollableContent.isScrollEnabled = false
+            }
+
+            override fun onStopTrackingImage() {
+                scrollableContent.isScrollEnabled = true
+            }
+
+        })
     }
 
     private fun checkPermissionError(error: Throwable) {

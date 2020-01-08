@@ -66,6 +66,8 @@ class PostCreatorBoardView @JvmOverloads constructor(
 
     private var textChangedListeners = mutableSetOf<TextChangedListener>()
 
+    private var imageStateListeners = mutableSetOf<ImageStateListener>()
+
     override fun setEnabled(isEnabled: Boolean) {
         super.setEnabled(isEnabled)
         textInput.isEnabled = isEnabled
@@ -143,6 +145,8 @@ class PostCreatorBoardView @JvmOverloads constructor(
         textDecorator.setTextDecorators(decorators)
     }
 
+    // region: TextChangedListener
+
     fun addTextChangedListener(listener: TextChangedListener) {
         textChangedListeners.add(listener)
     }
@@ -152,6 +156,30 @@ class PostCreatorBoardView @JvmOverloads constructor(
             it.onTextChanged(text)
         }
     }
+
+    // endregion
+
+    // region: ImageStateListener
+
+    fun addImageStateListener(listener: ImageStateListener) {
+        imageStateListeners.add(listener)
+    }
+
+    private fun notifyImageTrackingStarted() {
+        imageStateListeners.forEach {
+            it.onStartTrackingImage()
+        }
+    }
+
+    private fun notifyImageTrackingStopped() {
+        imageStateListeners.forEach {
+            it.onStopTrackingImage()
+        }
+    }
+
+    // endregion
+
+    // region: Add image
 
     fun addImage(image: PostCreatorImage) {
         if (imageViewsMap.containsKey(image.id))
@@ -184,6 +212,8 @@ class PostCreatorBoardView @JvmOverloads constructor(
         return imageView
     }
 
+    // endregion
+
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
 
@@ -192,16 +222,22 @@ class PostCreatorBoardView @JvmOverloads constructor(
             deleteButton.top + deleteButton.height.toFloat() / 2)
     }
 
+    // region: onTouchEvent
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val touchTracker = activeTouchTracker ?: findTouchTracker(event)
-            ?.also(this::activeTouchTracker::set)
+            ?.also {
+                activeTouchTracker = it
+                notifyImageTrackingStarted()
+            }
 
         return touchTracker?.onTouchEvent(event) ?: super.onTouchEvent(event)
     }
 
     private fun findTouchTracker(event: MotionEvent): TouchTracker? {
         val image = findImageUnderTouch(event) ?: return null
+
         return touchTrackerFactory.create(
             image,
             this::onImageMoved,
@@ -262,6 +298,8 @@ class PostCreatorBoardView @JvmOverloads constructor(
     }
 
     private fun onImageInteractionCompleted(touchPoint: PointF, image: PostCreatorImage) {
+        notifyImageTrackingStopped()
+
         activeTouchTracker = null
         deleteButton.isVisible = false
 
@@ -290,7 +328,8 @@ class PostCreatorBoardView @JvmOverloads constructor(
             ?.let { (id, _) -> imagesMap[id]}
     }
 
-    // TODO: https://github.com/SunnyDayDev/demo-post-creator/projects/1#card-31003220
+    // endregion
+
     private fun decorateText() {
         val layout = textInput.layout
         val text = textInput.text.toString()
@@ -392,6 +431,14 @@ class PostCreatorBoardView @JvmOverloads constructor(
     interface TextChangedListener {
 
         fun onTextChanged(text: String)
+
+    }
+
+    interface ImageStateListener {
+
+        fun onStartTrackingImage()
+
+        fun onStopTrackingImage()
 
     }
 
