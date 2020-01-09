@@ -14,32 +14,32 @@ internal class DefaultBackgroundsSourceImpl @Inject internal constructor(
 
     override fun getDefaultBackgrounds(): Observable<List<Background>> = Observable.just(listOf(
         Background.Color(
-            -7,
+            Long.MIN_VALUE + 1,
             Color.WHITE
         ),
         Background.Gradient(
-            -6,
+            Long.MIN_VALUE + 2,
             intArrayOf(0xFF00EFC8.toInt(), 0xFF0762E5.toInt())
         ),
         Background.Gradient(
-            -5,
+            Long.MIN_VALUE + 3,
             intArrayOf(0xFFAAE400.toInt(), 0xFF04B025.toInt())
         ),
         Background.Gradient(
-            -4,
+            Long.MIN_VALUE + 4,
             intArrayOf(0xFFFFBA00.toInt(), 0xFFFF590B.toInt())
         ),
         Background.Gradient(
-            -3,
+            Long.MIN_VALUE + 5,
             intArrayOf(0xFFFF003F.toInt(), 0xFF99004F.toInt())
         ),
         Background.Resource(
-            -2,
+            Long.MIN_VALUE + 6,
             R.drawable.backgrounds__bg__beach,
             UriUtil.resourceUri(R.drawable.backgrounds__ic__beach_thumbnail, context)
         ),
         Background.Resource(
-            -1,
+            Long.MIN_VALUE + 7,
             R.drawable.backgrounds__bg__stars_center,
             UriUtil.resourceUri(R.drawable.backgrounds__ic__stars_thumbnail, context)
         )
