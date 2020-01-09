@@ -1,6 +1,5 @@
 package dev.sunnyday.postcreator.postcreator.di
 
-import com.squareup.inject.assisted.dagger2.AssistedModule
 import dagger.Binds
 import dagger.Module
 import dev.sunnyday.postcreator.postcreator.operation.AddBackgroundFromDeviceOperation
@@ -10,11 +9,7 @@ import dev.sunnyday.postcreator.postcreator.operation.DrawViewToFileOperationImp
 import dev.sunnyday.postcreator.postcreator.styles.FixedInMemoryTextStylesSource
 import dev.sunnyday.postcreator.postcreator.styles.TextStylesSource
 
-@AssistedModule
-@Module(includes = [
-    AssistedInject_PostCreatorModule::class,
-    InternalPostCreatorModule::class
-])
+@Module(includes = [InternalPostCreatorModule::class])
 class PostCreatorModule
 
 @Module
