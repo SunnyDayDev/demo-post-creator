@@ -16,17 +16,18 @@ class RoundedColorFillDecorator(
 
     override fun decorateText(canvas: Canvas, lines: List<TextDecorator.Line>) {
         val summaryPath = Path()
+        val path = Path()
 
         lines.forEach {
-            val rectPath = Path()
-            rectPath.addRect(
+            path.reset()
+            path.addRect(
                 it.bounds.left.toFloat() - padding.left,
                 it.bounds.top.toFloat() - padding.top,
                 it.bounds.right.toFloat() + padding.right,
                 it.bounds.bottom.toFloat() + padding.bottom,
                 Path.Direction.CW)
 
-            summaryPath.op(rectPath, Path.Op.UNION)
+            summaryPath.op(path, Path.Op.UNION)
         }
 
         canvas.drawPath(summaryPath, paint)
