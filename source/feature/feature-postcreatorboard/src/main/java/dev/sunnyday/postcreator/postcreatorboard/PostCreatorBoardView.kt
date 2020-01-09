@@ -63,6 +63,10 @@ class PostCreatorBoardView @JvmOverloads constructor(
     private val touchTrackerFactory = ImageTouchTrackerFactory()
     private val checkTouchSize = Dimen.dp(8, context).toInt()
 
+    private val locationOnScreenBuffer = intArrayOf(0,0)
+    private val imageTouchVectorBuffer = floatArrayOf(0f,0f)
+    private val rotationMatrixBuffer = Matrix()
+
     private var deleteButtonCenterPoint: PointF = PointF(0f, 0f)
     private val deleteActionRadius = Dimen.dp(36, context)
     private var isDeleteActionActive = false
@@ -337,27 +341,50 @@ class PostCreatorBoardView @JvmOverloads constructor(
     }
 
     private fun findImageUnderTouch(event: MotionEvent): PostCreatorImage? {
-        val rect = Rect()
         val x = event.rawX.toInt()
         val y = event.rawY.toInt()
+
+        val rect = Rect()
 
         return imageViewsMap.entries
             .reversed()
             .firstOrNull { (_, imageView) ->
                 imageView.getGlobalVisibleRect(rect)
 
-                rect.contains(x, y) &&
-                    checkNonTransparentTouch(x - rect.left, y - rect.top, imageView)
+                rect.contains(x, y) && checkNonTransparentTouch(x, y, imageView)
             }
             ?.let { (id, _) -> imagesMap[id]}
     }
 
-    private fun checkNonTransparentTouch(x: Int, y: Int, imageView: ImageView): Boolean {
-        val bitmap = imageView.drawToBitmap(Bitmap.Config.ARGB_8888)
-        val touchAreaPixels = getTouchPixels(x, y, checkTouchSize, bitmap)
-        bitmap.recycle()
+    private fun checkNonTransparentTouch(rawX: Int, rawY: Int, imageView: ImageView): Boolean {
+        var bitmap: Bitmap? = null
+        try {
+            imageView.getLocationOnScreen(locationOnScreenBuffer)
 
-        return touchAreaPixels.any { it != Color.TRANSPARENT }
+            val imageX = rawX - locationOnScreenBuffer[0]
+            val imageY = rawY - locationOnScreenBuffer[1]
+
+            imageTouchVectorBuffer[0] = imageX.toFloat()
+            imageTouchVectorBuffer[1] = imageY.toFloat()
+
+            rotationMatrixBuffer.reset()
+            rotationMatrixBuffer.setRotate(
+                -imageView.rotation, imageView.width / 2f, imageView.height / 2f)
+            rotationMatrixBuffer.mapVectors(imageTouchVectorBuffer)
+
+            val rotatedImageX = imageTouchVectorBuffer[0].toInt()
+            val rotatedImageY = imageTouchVectorBuffer[1].toInt()
+
+            bitmap = imageView.drawToBitmap(Bitmap.Config.ARGB_8888)
+            val touchAreaPixels =
+                getTouchPixels(rotatedImageX, rotatedImageY, checkTouchSize, bitmap)
+
+            return touchAreaPixels.any { it != Color.TRANSPARENT }
+        } catch (e: Throwable) {
+            return false
+        } finally {
+            bitmap?.recycle()
+        }
     }
 
     private fun getTouchPixels(x: Int, y: Int, size: Int, bitmap: Bitmap): IntArray {
