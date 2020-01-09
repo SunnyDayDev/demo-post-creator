@@ -8,10 +8,12 @@ import dev.sunnyday.postcreator.core.app.rx.AppSchedulers
 import dev.sunnyday.postcreator.domain.backgrounds.db.BackgroundEntity
 import dev.sunnyday.postcreator.domain.backgrounds.db.BackgroundEntityType
 import dev.sunnyday.postcreator.domain.backgrounds.db.BackgroundsDao
+import dev.sunnyday.postcreator.domain.backgrounds.source.DefaultBackgroundsSource
 import dev.sunnyday.postcreator.domain.backgrounds.util.InputStreamUtil
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
+import io.reactivex.rxkotlin.Observables
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -21,15 +23,21 @@ import javax.inject.Inject
 internal class BackgroundsRepositoryImpl @Inject constructor(
     private val dao: BackgroundsDao,
     private val mapper: BackgroundsMapper,
+    private val defaultBackgroundsSource: DefaultBackgroundsSource,
     private val schedulers: AppSchedulers,
     private val context: Context
 ) : BackgroundsRepository {
 
-    override fun backgrounds(): Observable<List<Background>> =
-        dao.items
+    override fun backgrounds(): Observable<List<Background>> {
+        val default = defaultBackgroundsSource.getDefaultBackgrounds()
+
+        val stored = dao.items
             .subscribeOn(schedulers.io)
             .observeOn(schedulers.background)
             .map { it.map(mapper::entityToPlain) }
+
+        return Observables.combineLatest(default, stored) { d, s -> d + s }
+    }
 
     override fun addBackground(source: Uri): Completable =
         getBackgroundBitmap(source)

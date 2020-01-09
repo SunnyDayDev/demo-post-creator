@@ -7,8 +7,8 @@ import dev.sunnyday.postcreator.domain.backgrounds.BackgroundsRepository
 import dev.sunnyday.postcreator.domain.backgrounds.BackgroundsRepositoryImpl
 import dev.sunnyday.postcreator.domain.backgrounds.db.BackgroundsDao
 import dev.sunnyday.postcreator.domain.backgrounds.db.BackgroundsDatabase
-import dev.sunnyday.postcreator.domain.backgrounds.initializer.BackgroundsRepositoryInitializer
-import dev.sunnyday.postcreator.domain.backgrounds.initializer.BackgroundsRepositoryInitializerImpl
+import dev.sunnyday.postcreator.domain.backgrounds.source.DefaultBackgroundsSource
+import dev.sunnyday.postcreator.domain.backgrounds.source.DefaultBackgroundsSourceImpl
 import dev.sunnyday.postcreator.domain.backgrounds.prefs.BackgroundsRepositoryPrefs
 import dev.sunnyday.postcreator.domain.backgrounds.prefs.BackgroundsRepositoryPrefsImpl
 import dev.sunnyday.postcreator.domain.backgrounds.resolver.BackgroundResolver
@@ -38,7 +38,7 @@ internal interface DomainBackgroundsBindsModule {
     fun bindBackgroundRepositoryPrefs(impl: BackgroundsRepositoryPrefsImpl): BackgroundsRepositoryPrefs
 
     @Binds
-    fun bindBackgroundsRepositoryInitializer(impl: BackgroundsRepositoryInitializerImpl): BackgroundsRepositoryInitializer
+    fun bindDefaultBackgroundsSource(impl: DefaultBackgroundsSourceImpl): DefaultBackgroundsSource
 
     @Binds
     fun bindBackgroundResolver(impl: BackgroundResolverImpl): BackgroundResolver
