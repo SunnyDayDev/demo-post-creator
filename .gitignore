@@ -13,3 +13,7 @@
 .cxx
 
 **/build/
+
+app/signing.properties
+
+app/keystore.jks

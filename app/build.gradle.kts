@@ -1,3 +1,6 @@
+import org.gradle.internal.impldep.org.codehaus.plexus.util.PropertyUtils.loadProperties
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -34,7 +37,29 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
-    
+
+    signingConfigs {
+        create("release") {
+            try {
+                val properties = Properties()
+                properties.load(file("signing.properties").inputStream())
+
+                storeFile = project.file(properties["keystore.path"]!!)
+                storePassword = properties["keystore.password"] as String
+                keyAlias = properties["key.alias"] as String
+                keyPassword = properties["key.password"] as String
+            } catch (e: Throwable) {
+                println("Error: $e")
+                return@create
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
 }
 
 dependencies {
