@@ -19,7 +19,7 @@ internal class DecoratableEditText @JvmOverloads constructor(
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
         if (changed) {
-            invalidateDecoration()
+            invalidateDecorationTextLines()
         }
     }
 
@@ -54,15 +54,15 @@ internal class DecoratableEditText @JvmOverloads constructor(
 
     private fun invalidateDecoration() {
         if (lines.isEmpty()) {
-            removeDecoration()
+            removeTextDecoration()
         } else {
-            createOrUpdateDecoration()
+            updateTextDecoration()
         }
 
         invalidate()
     }
 
-    private fun createOrUpdateDecoration() {
+    private fun updateTextDecoration() {
         val decorationHeight = max(layout.height, height)
 
         val bitmap = decoration?.takeIf { it.width == width && it.height == decorationHeight }
@@ -85,7 +85,7 @@ internal class DecoratableEditText @JvmOverloads constructor(
         }
     }
 
-    private fun removeDecoration() {
+    private fun removeTextDecoration() {
         decoration?.recycle()
         decoration = null
     }
