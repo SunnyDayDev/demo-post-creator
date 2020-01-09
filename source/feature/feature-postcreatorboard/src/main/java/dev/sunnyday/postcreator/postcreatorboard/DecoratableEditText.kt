@@ -8,8 +8,8 @@ import dev.sunnyday.postcreator.postcreatorboard.decorations.TextDecorator
 import kotlin.math.max
 
 internal class DecoratableEditText @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet?  = null
-): AppCompatEditText(context, attrs) {
+    context: Context, attrs: AttributeSet?  = null, defStyle: Int = R.attr.editTextStyle
+): AppCompatEditText(context, attrs, defStyle) {
 
     private var lines: List<TextDecorator.Line> = emptyList()
 
