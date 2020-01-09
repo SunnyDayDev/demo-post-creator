@@ -1,6 +1,5 @@
 package dev.sunnyday.postcreator.postcreatorboard
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
 import android.content.res.TypedArray
@@ -9,11 +8,11 @@ import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.MotionEvent
-import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.annotation.ColorInt
 import androidx.annotation.Dimension
+import androidx.core.view.drawToBitmap
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.addTextChangedListener
@@ -25,6 +24,8 @@ import dev.sunnyday.postcreator.postcreatorboard.touchtracker.ImageTouchTrackerF
 import dev.sunnyday.postcreator.postcreatorboard.touchtracker.TouchTracker
 import kotlinx.android.synthetic.main.postcreatorboard__view.view.*
 import java.util.*
+import kotlin.math.max
+import kotlin.math.min
 
 
 class PostCreatorBoardView @JvmOverloads constructor(
@@ -56,6 +57,7 @@ class PostCreatorBoardView @JvmOverloads constructor(
 
     private var activeTouchTracker: TouchTracker? = null
     private val touchTrackerFactory = ImageTouchTrackerFactory()
+    private val checkTouchSize = Dimen.dp(8, context).toInt()
 
     private var deleteButtonCenterPoint: PointF = PointF(0f, 0f)
     private val deleteActionRadius = Dimen.dp(36, context)
@@ -316,11 +318,39 @@ class PostCreatorBoardView @JvmOverloads constructor(
         val y = event.rawY.toInt()
 
         return imageViewsMap.entries
+            .reversed()
             .firstOrNull { (_, imageView) ->
                 imageView.getGlobalVisibleRect(rect)
-                rect.contains(x, y)
+
+                rect.contains(x, y) &&
+                    checkNonTransparentTouch(x - rect.left, y - rect.top, imageView)
             }
             ?.let { (id, _) -> imagesMap[id]}
+    }
+
+    private fun checkNonTransparentTouch(x: Int, y: Int, imageView: ImageView): Boolean {
+        val bitmap = imageView.drawToBitmap(Bitmap.Config.ARGB_8888)
+        val touchAreaPixels = getTouchPixels(x, y, checkTouchSize, bitmap)
+        bitmap.recycle()
+
+        return touchAreaPixels.any { it != Color.TRANSPARENT }
+    }
+
+    private fun getTouchPixels(x: Int, y: Int, size: Int, bitmap: Bitmap): IntArray {
+        val halfTouchSize = size / 2
+        val touchAreaLeft = max(x - halfTouchSize, 0)
+        val touchAreaRight = min(x + halfTouchSize, bitmap.width)
+        val width = touchAreaRight - touchAreaLeft
+        val touchAreaTop = max(y - halfTouchSize, 0)
+        val touchAreaBottom = min(y + halfTouchSize, bitmap.height)
+        val height = touchAreaBottom - touchAreaTop
+
+        val touchAreaPixels = IntArray(width * height) {
+            Color.TRANSPARENT
+        }
+        bitmap.getPixels(touchAreaPixels, 0, width, touchAreaLeft, touchAreaTop, width, height)
+
+        return touchAreaPixels
     }
 
     // endregion
