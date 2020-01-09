@@ -30,8 +30,8 @@ object AndroidX {
     const val recyclerView = "androidx.recyclerview:recyclerview:1.1.0"
     const val card = "androidx.cardview:cardview:1.0.0"
     const val exifInterface = "androidx.exifinterface:exifinterface:1.2.0-beta01"
-    const val fragment = "androidx.fragment:fragment:1.2.0-rc04"
-    const val fragmentKtx = "androidx.fragment:fragment-ktx:1.2.0-rc04"
+    const val fragment = "androidx.fragment:fragment:1.2.0-rc05"
+    const val fragmentKtx = "androidx.fragment:fragment-ktx:1.2.0-rc05"
 
 }
 
@@ -115,7 +115,7 @@ object Room {
 
 object Glide {
 
-    private const val version = "4.10.0"
+    private const val version = "4.11.0"
 
     const val api = "com.github.bumptech.glide:glide:$version"
     const val compiler = "com.github.bumptech.glide:compiler:$version"
