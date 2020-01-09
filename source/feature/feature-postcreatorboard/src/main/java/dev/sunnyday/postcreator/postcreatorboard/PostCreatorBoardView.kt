@@ -9,6 +9,7 @@ import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.MotionEvent
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.annotation.ColorInt
@@ -216,15 +217,17 @@ class PostCreatorBoardView @JvmOverloads constructor(
 
     // region: onTouchEvent
 
-    @SuppressLint("ClickableViewAccessibility")
-    override fun onTouchEvent(event: MotionEvent): Boolean {
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        if (textInput.selectionEnd != textInput.selectionStart)
+            return super.dispatchTouchEvent(event)
+
         val touchTracker = activeTouchTracker ?: findTouchTracker(event)
             ?.also {
                 activeTouchTracker = it
                 notifyImageTrackingStarted()
             }
 
-        return touchTracker?.onTouchEvent(event) ?: super.onTouchEvent(event)
+        return touchTracker?.onTouchEvent(event) ?: super.dispatchTouchEvent(event)
     }
 
     private fun findTouchTracker(event: MotionEvent): TouchTracker? {
