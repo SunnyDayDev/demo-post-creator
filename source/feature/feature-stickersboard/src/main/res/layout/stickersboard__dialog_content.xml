@@ -5,6 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/content"
     android:orientation="vertical"
+    android:layout_gravity="bottom"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
@@ -18,10 +19,7 @@
         android:padding="16dp"
         android:background="#fff"
         android:elevation="0dp"
-        android:outlineProvider="bounds"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        android:outlineProvider="bounds"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/list"
@@ -31,11 +29,6 @@
         android:clipToPadding="false"
         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
         app:spanCount="4"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/title"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constrainedHeight="true"
         tools:listitem="@layout/stickersboard__item"/>
 
 </dev.sunnyday.postcreator.stickersboard.MaxHeightLinearLayout>

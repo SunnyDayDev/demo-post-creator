@@ -51,7 +51,6 @@ class StickersBoard private constructor(
         list.adapter = adapter
         adapter.items = stickers
 
-        // TODO: https://github.com/SunnyDayDev/demo-post-creator/issues/19
         content.maxHeight = context.resources.displayMetrics.heightPixels / 2
         behavior.state = BottomSheetBehavior.STATE_EXPANDED
 
