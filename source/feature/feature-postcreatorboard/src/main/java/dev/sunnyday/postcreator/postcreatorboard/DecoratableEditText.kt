@@ -30,7 +30,7 @@ internal class DecoratableEditText @JvmOverloads constructor(
         lengthAfter: Int
     ) {
         super.onTextChanged(text, start, lengthBefore, lengthAfter)
-        decorateText()
+        invalidateDecorationTextLines()
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -90,7 +90,7 @@ internal class DecoratableEditText @JvmOverloads constructor(
         decoration = null
     }
 
-    private fun decorateText() {
+    private fun invalidateDecorationTextLines() {
         val layout = layout ?: return
         val text = text.toString()
 
