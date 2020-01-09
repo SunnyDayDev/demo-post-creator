@@ -221,7 +221,7 @@ class PostCreatorBoardView @JvmOverloads constructor(
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
 
-        deleteButtonCenterPoint.set(width / 2f, height - Dimen.dp(72, context))
+        deleteButtonCenterPoint.set(width / 2f, height - Dimen.dp(40, context))
         checkDeleteButtonLayout()
     }
 
