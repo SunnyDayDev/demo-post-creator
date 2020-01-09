@@ -9,6 +9,7 @@ import timber.log.Timber
 
 internal class ImageTouchTracker(
     private val image: PostCreatorImage,
+    private val onStartedCallback: (PointF, PostCreatorImage) -> Unit,
     private val onMovedCallback: (PointF, PostCreatorImage) -> Unit,
     private val onCompleteCallback: (PointF, PostCreatorImage) -> Unit
 ) : TouchTracker {
@@ -99,6 +100,8 @@ internal class ImageTouchTracker(
         anchorSize = image.rect.width()
         anchorPoint =
             Point(image.rect.left, image.rect.top)
+
+        onStartedCallback(touchPoint, image)
     }
 
     private fun initSecondPointer(event: MotionEvent) {
