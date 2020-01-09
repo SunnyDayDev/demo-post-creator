@@ -7,10 +7,9 @@ include ':core'
 project(':core').projectDir = new File('source/core')
 
 include ':core:core-common'
-include ':core:core-app'
-include ':core:core-ui'
 include ':core:core-permissions'
 include ':core:core-activityforresult'
+include ':core:core-app'
 
 // endregion
 

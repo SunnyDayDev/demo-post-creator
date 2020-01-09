@@ -2,7 +2,6 @@ package dev.sunnyday.postcreator.core.activityforresult
 
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commit
-import dev.sunnyday.postcreator.core.ui.ActivityObserver
 import io.reactivex.Maybe
 import io.reactivex.disposables.Disposables
 import java.lang.ref.WeakReference
@@ -10,7 +9,7 @@ import java.util.*
 import javax.inject.Inject
 
 internal class ActivityForResultRequestInteractorImpl @Inject constructor(
-    private val activityObserver: ActivityObserver
+    private val activityObserver: ActivityForResultRequestInteractorActivityObserver
 ) : ActivityForResultRequestInteractor {
 
     override fun <T: Any> startActivityForResult(request: ActivityForResultRequest<T>): Maybe<T> =

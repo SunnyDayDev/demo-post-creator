@@ -70,7 +70,6 @@ dependencies {
     Room.addTo(this)
 
     implementation(project(PostCreator.Core.common))
-    implementation(project(PostCreator.Core.ui))
     implementation(project(PostCreator.Core.permissions))
     implementation(project(PostCreator.Core.activityForResult))
     implementation(project(PostCreator.Core.app))

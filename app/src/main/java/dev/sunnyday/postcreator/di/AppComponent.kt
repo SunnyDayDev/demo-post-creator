@@ -13,7 +13,6 @@ import dev.sunnyday.postcreator.core.activityforresult.di.CoreActivityForResultM
 import dev.sunnyday.postcreator.core.app.dagger.PerActivity
 import dev.sunnyday.postcreator.core.app.di.CoreAppModule
 import dev.sunnyday.postcreator.core.permissions.di.CorePermissionsModule
-import dev.sunnyday.postcreator.core.ui.di.CoreUIModule
 import dev.sunnyday.postcreator.domain.backgrounds.di.DomainBackgroundsModule
 import dev.sunnyday.postcreator.domain.stickers.di.DomainStickersModule
 import javax.inject.Singleton
@@ -21,7 +20,6 @@ import javax.inject.Singleton
 @Singleton
 @Component(
     modules = [
-        CoreUIModule::class,
         CoreAppModule::class,
         CorePermissionsModule::class,
         CoreActivityForResultModule::class,

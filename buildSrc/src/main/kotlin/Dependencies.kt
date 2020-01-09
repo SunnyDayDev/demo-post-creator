@@ -141,8 +141,6 @@ object PostCreator {
     object Core {
 
         const val common = ":core:core-common"
-        const val dagger = ":core:core-dagger"
-        const val ui = ":core:core-ui"
         const val permissions = ":core:core-permissions"
         const val activityForResult = ":core:core-activityforresult"
         const val app = ":core:core-app"

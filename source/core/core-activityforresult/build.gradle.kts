@@ -38,12 +38,14 @@ android {
 
 dependencies {
     implementation(Kotlin.stdlibJdk8)
+    implementation(AndroidX.appCompat)
+    implementation(AndroidX.fragment)
+    implementation(AndroidX.fragmentKtx)
 
     Rx.addTo(this)
     Dagger.addTo(this, useAndroid = true)
 
     implementation(project(PostCreator.Core.common))
-    implementation(project(PostCreator.Core.ui))
 
     testImplementation(Test.junit)
     androidTestImplementation(Test.junitExt)

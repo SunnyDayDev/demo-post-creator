@@ -2,9 +2,9 @@ package dev.sunnyday.postcreator
 
 import dagger.android.AndroidInjector
 import dagger.android.DaggerApplication
-import dev.sunnyday.postcreator.core.ui.ActivityTracker
+import dev.sunnyday.postcreator.core.activityforresult.ActivityForResultRequestInteractorStarter
+import dev.sunnyday.postcreator.core.permissions.PermissionRequestInteractorStarter
 import dev.sunnyday.postcreator.di.DaggerAppComponent
-import dev.sunnyday.postcreator.domain.backgrounds.initializer.BackgroundsRepositoryInitializer
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Provider
@@ -12,10 +12,10 @@ import javax.inject.Provider
 class App : DaggerApplication() {
 
     @Inject
-    internal lateinit var activityTracker: ActivityTracker
+    internal lateinit var activityForResultInteractorStarter: Provider<ActivityForResultRequestInteractorStarter>
 
     @Inject
-    internal lateinit var backgroundsInitializer: Provider<BackgroundsRepositoryInitializer>
+    internal lateinit var permissionInteractorStarter: Provider<PermissionRequestInteractorStarter>
 
     override fun applicationInjector(): AndroidInjector<out DaggerApplication> =
         DaggerAppComponent.factory().create(this)
@@ -26,11 +26,11 @@ class App : DaggerApplication() {
         initializeApp()
         initThirdPartyLibraries()
 
-        registerActivityLifecycleCallbacks(activityTracker)
     }
 
     private fun initializeApp() {
-        backgroundsInitializer.get().initialize()
+        activityForResultInteractorStarter.get().start(this)
+        permissionInteractorStarter.get().start(this)
     }
 
     private fun initThirdPartyLibraries() {
