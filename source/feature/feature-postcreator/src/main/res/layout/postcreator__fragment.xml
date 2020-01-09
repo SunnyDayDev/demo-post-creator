@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
+
+    <!-- Header -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp">
+
+        <com.google.android.material.button.MaterialButton
+            style="@style/AppWidget.ToolbarButton"
+            android:id="@+id/switchTextStyleButton"
+            android:layout_width="48dp"
+            android:layout_height="58dp"
+            app:icon="@drawable/ic_toolbar_font"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/postcreator__prompt__new_record"
+            android:textColor="@color/textDark"
+            android:textSize="16sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <com.google.android.material.button.MaterialButton
+            style="@style/AppWidget.ToolbarButton"
+            android:id="@+id/stickersButton"
+            android:layout_width="48dp"
+            android:layout_height="58dp"
+            app:icon="@drawable/ic_toolbar_sticker"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider"/>
+
+    <dev.sunnyday.postcreator.postcreator.DisableableScrollView
+        android:id="@+id/scrollableContent"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:context=".PostCreatorFragment"
+            tools:ignore="ScrollViewSize">
+
+            <!-- PostCreatorView -->
+            <dev.sunnyday.postcreator.postcreatorboard.PostCreatorBoardView
+                android:id="@+id/creatorView"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:actionsColor="?colorPrimary"
+                app:actionsBorderWidth="2dp"
+                app:hintTextColor="@color/textHintDark"
+                app:layout_constraintDimensionRatio="360:328"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="Some text, exactly some large text which should be displayed as multiline."
+                tools:textColor="@color/textLight"
+                tools:background="@tools:sample/backgrounds/scenic[13]"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </dev.sunnyday.postcreator.postcreator.DisableableScrollView>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider"/>
+
+    <!-- Footer -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <dev.sunnyday.postcreator.drawablechooser.DrawableChooser
+            android:id="@+id/drawableChooser"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"/>
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="@color/divider"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/saveButton"
+            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/postcreator__prompt__save"
+            android:backgroundTint="?colorPrimary"
+            android:textColor="?colorOnPrimary"
+            android:alpha="0.48"
+            android:enabled="false"
+            android:layout_marginEnd="16dp"
+            android:layout_marginStart="16dp"
+            android:textSize="13sp"
+            android:minHeight="44dp"/>
+
+    </LinearLayout>
+
+</LinearLayout>

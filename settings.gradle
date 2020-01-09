@@ -1,2 +1,36 @@
 rootProject.name='PostCreator'
 include ':app'
+
+// region Core
+
+include ':core'
+project(':core').projectDir = new File('source/core')
+
+include ':core:core-common'
+include ':core:core-permissions'
+include ':core:core-activityforresult'
+include ':core:core-app'
+
+// endregion
+
+// region Domain
+
+include ':domain'
+project(':domain').projectDir = new File('source/domain')
+
+include ':domain:domain-backgrounds'
+include ':domain:domain-stickers'
+
+// endregion
+
+// region Feature
+
+include ':feature'
+project(':feature').projectDir = new File('source/feature')
+
+include ':feature:feature-postcreator'
+include ':feature:feature-postcreatorboard'
+include ':feature:feature-drawablechooser'
+include ':feature:feature-stickersboard'
+
+// endregion
