@@ -232,8 +232,6 @@ class PostCreatorBoardView @JvmOverloads constructor(
     private fun updateDeleteButtonTranslationByVisibility() {
         if (deleteButton.isInvisible) {
             deleteButton.translationY = calculateInvisibleDeleteButtonTranslationY()
-        } else {
-            deleteButton.translationY = 0f
         }
     }
 
@@ -437,6 +435,7 @@ class PostCreatorBoardView @JvmOverloads constructor(
             }
 
             doOnStart {
+                deleteButton.setWillNotDraw(true)
                 deleteButton.isVisible = true
             }
 
