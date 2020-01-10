@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:parentTag="android.widget.FrameLayout"
+    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout"
     tools:background="#aaa">
 
     <dev.sunnyday.postcreator.postcreatorboard.DecoratableEditText
@@ -25,6 +25,14 @@
         android:textStyle="bold"
         android:importantForAutofill="no" />
 
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/actionsGuideline"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintGuide_end="40dp" />
+
     <ImageView
         android:id="@+id/deleteButton"
         android:src="@drawable/postcreator__ic__fab_trash"
@@ -34,6 +42,9 @@
         android:tint="#000"
         android:background="@drawable/postcreator__bg__fab_trash"
         android:layout_gravity="center_horizontal|bottom"
-        android:layout_marginBottom="16dp"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/actionsGuideline"
+        app:layout_constraintBottom_toBottomOf="@id/actionsGuideline"/>
 
 </merge>
