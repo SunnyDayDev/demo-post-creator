@@ -221,17 +221,17 @@ class PostCreatorBoardView @JvmOverloads constructor(
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
 
-        deleteButtonCenterPoint.set(width / 2f, height - Dimen.dp(40, context))
-        checkDeleteButtonLayout()
-    }
+        deleteButtonCenterPoint.set(
+            deleteButton.left + deleteButton.width / 2f,
+            deleteButton.top + deleteButton.height / 2f)
 
-    private fun checkDeleteButtonLayout() {
-        if (deleteButton.isInvisible && deleteButton.marginBottom != -deleteButton.height) {
-            deleteButton.updateLayoutParams<LayoutParams> {
-                bottomMargin = -deleteButton.height
-            }
+        if (deleteButton.isInvisible) {
+            deleteButton.translationY = calculateInvisibleDeleteButtonTranslationY()
         }
     }
+
+    private fun calculateInvisibleDeleteButtonTranslationY(): Float =
+        (height - deleteButton.top).toFloat()
 
     // region: onTouchEvent
 
@@ -292,10 +292,10 @@ class PostCreatorBoardView @JvmOverloads constructor(
         if (isDeleteActionActive == isActive) return
         isDeleteActionActive = isActive
 
-        updateDeleteButtonByActiveState(isActive)
+        updateDeleteButtonLayoutByActiveState(isActive)
     }
 
-    private fun updateDeleteButtonByActiveState(isActive: Boolean) {
+    private fun updateDeleteButtonLayoutByActiveState(isActive: Boolean) {
         if (isActive) {
             val size =  Dimen.dp(56, context).toInt()
             deleteButton.setImageResource(R.drawable.postcreator__ic__fab_trash_released)
@@ -411,13 +411,12 @@ class PostCreatorBoardView @JvmOverloads constructor(
     private fun showDeleteButton() {
         deleteButtonAnimation?.cancel()
 
-        val startCenterToBottom = deleteButton.top + deleteButton.height / 2
-        val endCenterToBottom = deleteButtonCenterPoint.y.toInt()
-        val buttonSize = Dimen.dp(48, context).toInt()
+        val startTranslationY = deleteButton.translationY
+        val endTranslationY = 0f
 
-        deleteButtonAnimation = ValueAnimator.ofInt(startCenterToBottom, endCenterToBottom).apply {
+        deleteButtonAnimation = ValueAnimator.ofFloat(startTranslationY, endTranslationY).apply {
             addUpdateListener { value ->
-                updateDeleteButtonLayout(buttonSize, value.animatedValue as Int)
+                deleteButton.translationY = value.animatedValue as Float
             }
 
             doOnStart {
@@ -425,7 +424,7 @@ class PostCreatorBoardView @JvmOverloads constructor(
             }
 
             doOnEnd {
-                updateDeleteButtonByActiveState(isDeleteActionActive)
+                updateDeleteButtonLayoutByActiveState(isDeleteActionActive)
             }
 
             interpolator = FastOutSlowInInterpolator()
@@ -438,13 +437,12 @@ class PostCreatorBoardView @JvmOverloads constructor(
     private fun hideDeleteButton() {
         deleteButtonAnimation?.cancel()
 
-        val startCenterToBottom = deleteButton.top + deleteButton.height / 2
-        val endCenterToBottom = height + deleteButton.height / 2
-        val buttonSize = Dimen.dp(48, context).toInt()
+        val startTranslationY = deleteButton.translationY
+        val endTranslationY = calculateInvisibleDeleteButtonTranslationY()
 
-        deleteButtonAnimation = ValueAnimator.ofInt(startCenterToBottom, endCenterToBottom).apply {
+        deleteButtonAnimation = ValueAnimator.ofFloat(startTranslationY, endTranslationY).apply {
             addUpdateListener { value ->
-                updateDeleteButtonLayout(buttonSize, value.animatedValue as Int)
+                deleteButton.translationY = value.animatedValue as Float
             }
 
             doOnEnd {
