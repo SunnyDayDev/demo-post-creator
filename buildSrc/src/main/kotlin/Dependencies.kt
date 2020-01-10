@@ -122,6 +122,12 @@ object Glide {
 
 }
 
+object Util {
+
+    const val androidImageCropper = "com.theartofdev.edmodo:android-image-cropper:2.8.0"
+
+}
+
 object Log {
 
     const val timber = "com.jakewharton.timber:timber:4.7.1"
