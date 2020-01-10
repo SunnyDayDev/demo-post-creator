@@ -38,6 +38,7 @@ android {
 
 dependencies {
     implementation(Kotlin.stdlibJdk8)
+    implementation(Util.androidImageCropper)
     api(AndroidX.appCompat)
     api(AndroidX.coreKtx)
     api(AndroidX.material)

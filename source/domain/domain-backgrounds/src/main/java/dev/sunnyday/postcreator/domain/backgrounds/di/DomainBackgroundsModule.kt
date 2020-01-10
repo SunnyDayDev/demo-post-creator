@@ -9,8 +9,6 @@ import dev.sunnyday.postcreator.domain.backgrounds.db.BackgroundsDao
 import dev.sunnyday.postcreator.domain.backgrounds.db.BackgroundsDatabase
 import dev.sunnyday.postcreator.domain.backgrounds.source.DefaultBackgroundsSource
 import dev.sunnyday.postcreator.domain.backgrounds.source.DefaultBackgroundsSourceImpl
-import dev.sunnyday.postcreator.domain.backgrounds.prefs.BackgroundsRepositoryPrefs
-import dev.sunnyday.postcreator.domain.backgrounds.prefs.BackgroundsRepositoryPrefsImpl
 import dev.sunnyday.postcreator.domain.backgrounds.resolver.BackgroundResolver
 import dev.sunnyday.postcreator.domain.backgrounds.resolver.BackgroundResolverImpl
 import javax.inject.Singleton
@@ -33,9 +31,6 @@ internal interface DomainBackgroundsBindsModule {
     @Binds
     @Singleton
     fun bindBackgroundsRepository(impl: BackgroundsRepositoryImpl): BackgroundsRepository
-
-    @Binds
-    fun bindBackgroundRepositoryPrefs(impl: BackgroundsRepositoryPrefsImpl): BackgroundsRepositoryPrefs
 
     @Binds
     fun bindDefaultBackgroundsSource(impl: DefaultBackgroundsSourceImpl): DefaultBackgroundsSource
