@@ -230,10 +230,15 @@ class PostCreatorFragment : DaggerFragment() {
 
     private fun setupStickersButton() {
         stickersButton.setOnClickListener {
-            stickersRepository.stickers()
-                .observeOn(schedulers.ui)
-                .subscribeBy(onSuccess = this::showStickersBoard)
+            showStickersBoard()
         }
+    }
+
+    private fun showStickersBoard() {
+        stickersRepository.stickers()
+            .observeOn(schedulers.ui)
+            .subscribeBy(onSuccess = this::showStickersBoard)
+            .let(dispose::add)
     }
 
     private fun showStickersBoard(stickers: List<Sticker>) {
@@ -280,22 +285,26 @@ class PostCreatorFragment : DaggerFragment() {
 
     private fun setupSaveButton() {
         saveButton.setOnClickListener {
-            view?.requestFocus()
-            creatorView.isEnabled = false
-
-            hideKeyboard()
-
-            saveOperation.drawToFile(creatorView)
-                .observeOn(schedulers.ui)
-                .doFinally { creatorView.isEnabled = true }
-                .subscribeBy(onError = this::checkPermissionError)
-                .let(dispose::add)
+            savePost()
         }
 
         updateSaveButtonState()
         creatorView.addTextChangedListener(object : PostCreatorBoardView.TextChangedListener {
             override fun onTextChanged(text: String) = updateSaveButtonState()
         })
+    }
+
+    private fun savePost() {
+        view?.requestFocus()
+        creatorView.isEnabled = false
+
+        hideKeyboard()
+
+        saveOperation.drawToFile(creatorView)
+            .observeOn(schedulers.ui)
+            .doFinally { creatorView.isEnabled = true }
+            .subscribeBy(onError = this::checkPermissionError)
+            .let(dispose::add)
     }
 
     private fun hideKeyboard() {
@@ -322,15 +331,15 @@ class PostCreatorFragment : DaggerFragment() {
     private fun setupScrollableContent() {
         creatorView.addImageStateListener(object : PostCreatorBoardView.ImageStateListener {
 
-            override fun onStartTrackingImage() {
-                scrollableContent.isScrollEnabled = false
-            }
+            override fun onStartTrackingImage() = setScrollingEnabled(false)
 
-            override fun onStopTrackingImage() {
-                scrollableContent.isScrollEnabled = true
-            }
+            override fun onStopTrackingImage() = setScrollingEnabled(true)
 
         })
+    }
+
+    private fun setScrollingEnabled(isEnabled: Boolean) {
+        scrollableContent.isScrollEnabled = isEnabled
     }
 
     private fun checkPermissionError(error: Throwable) {
