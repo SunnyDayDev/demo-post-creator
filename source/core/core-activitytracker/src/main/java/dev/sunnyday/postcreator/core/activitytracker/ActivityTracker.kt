@@ -1,4 +1,4 @@
-package dev.sunnyday.postcreator.core.activityforresult
+package dev.sunnyday.postcreator.core.activitytracker
 
 import android.app.Activity
 import android.app.Application
@@ -9,13 +9,9 @@ import io.reactivex.subjects.BehaviorSubject
 import javax.inject.Inject
 import javax.inject.Singleton
 
-internal interface ActivityForResultRequestInteractorActivityObserver {
-    val lastStartedActivity: Observable<Optional<Activity>>
-}
-
 @Singleton
-internal class ActivityForResultRequestInteractorActivityTracker @Inject constructor()
-    : Application.ActivityLifecycleCallbacks, ActivityForResultRequestInteractorActivityObserver {
+internal class ActivityTracker @Inject constructor()
+    : Application.ActivityLifecycleCallbacks, ActivityTrackerObserver {
 
     private val startedActivities = BehaviorSubject.createDefault<List<Activity>>(emptyList())
 

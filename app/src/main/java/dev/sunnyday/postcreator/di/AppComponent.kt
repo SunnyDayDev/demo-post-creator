@@ -10,9 +10,11 @@ import dagger.android.ContributesAndroidInjector
 import dev.sunnyday.postcreator.App
 import dev.sunnyday.postcreator.AppActivity
 import dev.sunnyday.postcreator.core.activityforresult.di.CoreActivityForResultModule
+import dev.sunnyday.postcreator.core.activitytracker.di.CoreActivityTrackerModule
 import dev.sunnyday.postcreator.core.app.dagger.PerActivity
 import dev.sunnyday.postcreator.core.app.di.CoreAppModule
 import dev.sunnyday.postcreator.core.permissions.di.CorePermissionsModule
+import dev.sunnyday.postcreator.core.snackbarinteractor.di.CoreSnackbarModule
 import dev.sunnyday.postcreator.domain.backgrounds.di.DomainBackgroundsModule
 import dev.sunnyday.postcreator.domain.stickers.di.DomainStickersModule
 import javax.inject.Singleton
@@ -21,8 +23,10 @@ import javax.inject.Singleton
 @Component(
     modules = [
         CoreAppModule::class,
+        CoreActivityTrackerModule::class,
         CorePermissionsModule::class,
         CoreActivityForResultModule::class,
+        CoreSnackbarModule::class,
         DomainBackgroundsModule::class,
         DomainStickersModule::class,
         AppModule::class,

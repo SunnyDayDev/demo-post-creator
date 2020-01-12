@@ -39,8 +39,7 @@ android {
 dependencies {
     implementation(Kotlin.stdlibJdk8)
     implementation(AndroidX.appCompat)
-    implementation(AndroidX.fragment)
-    implementation(AndroidX.fragmentKtx)
+    implementation(AndroidX.material)
 
     Rx.addTo(this)
     Dagger.addTo(this, useAndroid = true)
