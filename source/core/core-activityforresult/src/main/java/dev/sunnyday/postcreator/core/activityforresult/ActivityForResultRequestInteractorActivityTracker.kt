@@ -17,7 +17,7 @@ internal interface ActivityForResultRequestInteractorActivityObserver {
 internal class ActivityForResultRequestInteractorActivityTracker @Inject constructor()
     : Application.ActivityLifecycleCallbacks, ActivityForResultRequestInteractorActivityObserver {
 
-    private val startedActivities = BehaviorSubject.createDefault<Set<Activity>>(emptySet())
+    private val startedActivities = BehaviorSubject.createDefault<List<Activity>>(emptyList())
 
     override val lastStartedActivity: Observable<Optional<Activity>> =
         startedActivities.map { Optional(it.lastOrNull()) }
@@ -25,7 +25,7 @@ internal class ActivityForResultRequestInteractorActivityTracker @Inject constru
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) { }
 
     override fun onActivityStarted(activity: Activity) {
-        val currentlyStarted = startedActivities.value ?: emptySet()
+        val currentlyStarted = startedActivities.value ?: emptyList()
         startedActivities.onNext(currentlyStarted + activity)
     }
 
@@ -35,7 +35,10 @@ internal class ActivityForResultRequestInteractorActivityTracker @Inject constru
 
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) { }
 
-    override fun onActivityStopped(activity: Activity) { }
+    override fun onActivityStopped(activity: Activity) {
+        val currentlyStarted = startedActivities.value ?: emptyList()
+        startedActivities.onNext(currentlyStarted - activity)
+    }
 
     override fun onActivityDestroyed(activity: Activity) { }
 

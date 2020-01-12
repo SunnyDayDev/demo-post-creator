@@ -38,6 +38,7 @@ import dev.sunnyday.postcreator.stickersboard.StickersBoard
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.subscribeBy
 import kotlinx.android.synthetic.main.postcreator__fragment.*
+import timber.log.Timber
 import java.util.ArrayList
 import javax.inject.Inject
 import kotlin.math.min
@@ -345,6 +346,8 @@ class PostCreatorFragment : DaggerFragment() {
     private fun checkPermissionError(error: Throwable) {
         if (error is PermissionsNotGrantedError) {
             showMessageDialog(R.string.postcreator__prompt__permission_not_granted_error)
+        } else {
+            Timber.e(error)
         }
     }
 
