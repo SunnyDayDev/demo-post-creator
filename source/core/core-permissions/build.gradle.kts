@@ -46,6 +46,7 @@ dependencies {
     Dagger.addTo(this, useAndroid = true)
 
     implementation(project(PostCreator.Core.common))
+    implementation(project(PostCreator.Core.activityTracker))
 
     testImplementation(Test.junit)
     androidTestImplementation(Test.junitExt)

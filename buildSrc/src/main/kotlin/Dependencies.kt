@@ -149,6 +149,8 @@ object PostCreator {
         const val common = ":core:core-common"
         const val permissions = ":core:core-permissions"
         const val activityForResult = ":core:core-activityforresult"
+        const val snackbarInteractor = ":core:core-snackbarinteractor"
+        const val activityTracker = ":core:core-activitytracker"
         const val app = ":core:core-app"
 
     }

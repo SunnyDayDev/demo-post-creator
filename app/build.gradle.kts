@@ -70,8 +70,10 @@ dependencies {
     Room.addTo(this)
 
     implementation(project(PostCreator.Core.common))
+    implementation(project(PostCreator.Core.activityTracker))
     implementation(project(PostCreator.Core.permissions))
     implementation(project(PostCreator.Core.activityForResult))
+    implementation(project(PostCreator.Core.snackbarInteractor))
     implementation(project(PostCreator.Core.app))
     implementation(project(PostCreator.Domain.backgrounds))
     implementation(project(PostCreator.Domain.stickers))
