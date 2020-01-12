@@ -5,7 +5,6 @@ import android.graphics.PointF
 import android.view.MotionEvent
 import dev.sunnyday.postcreator.core.common.math.MathUtil
 import dev.sunnyday.postcreator.postcreatorboard.PostCreatorImage
-import timber.log.Timber
 
 internal class ImageTouchTracker(
     private val image: PostCreatorImage,
@@ -15,7 +14,8 @@ internal class ImageTouchTracker(
 ) : TouchTracker {
 
     private var anchorPoint: Point? = null
-    private var anchorSize: Int? = null
+    private var anchorSize: Point? = null
+    private var anchorSizeRelativePoint: PointF? = null
     private var anchorAngle: Float? = null
 
     private var firstPointerId: Int? = null
@@ -25,9 +25,11 @@ internal class ImageTouchTracker(
     private var secondPointerId: Int? = null
     private var secondActualPoint: PointF? = null
 
-    private var startSize: Int? = null
+    private var startSize: Point? = null
     private var startDistance: Float? = null
     private var startAngle: Float? = null
+
+    private val sizeBuffer = Point()
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.actionMasked) {
@@ -97,9 +99,11 @@ internal class ImageTouchTracker(
         firstStartPoint = PointF(touchPoint.x, touchPoint.y)
         firstActualPoint = touchPoint
 
-        anchorSize = image.rect.width()
-        anchorPoint =
-            Point(image.rect.left, image.rect.top)
+        anchorSize = Point(image.rect.width(), image.rect.height())
+        anchorPoint = Point(image.rect.left, image.rect.top)
+        anchorSizeRelativePoint = PointF(
+            (touchPoint.x - image.rect.left) / image.rect.width(),
+            (touchPoint.y - image.rect.top) / image.rect.height())
 
         onStartedCallback(touchPoint, image)
     }
@@ -112,13 +116,11 @@ internal class ImageTouchTracker(
 
         secondPointerId = pointerId
 
-        Timber.d("First pointer initialized: $secondPointerId")
-
         val touchPoint = PointF()
         updatePoint(pointerId, event, touchPoint)
         secondActualPoint = touchPoint
 
-        startSize = image.rect.width()
+        startSize = Point(image.rect.width(), image.rect.height())
 
         val firstTouchPoint = firstActualPoint ?: return
         startDistance = MathUtil.getDistance(firstTouchPoint, touchPoint)
@@ -131,34 +133,49 @@ internal class ImageTouchTracker(
         val firstActualPoint = firstActualPoint ?:return
         val firstStartPoint = firstStartPoint ?:return
         val anchorSize = anchorSize ?: return
+        val anchorSizeRelativePoint = anchorSizeRelativePoint ?: return
 
-        var size = image.rect.width()
+        val size = sizeBuffer
+        size.set(image.rect.width(), image.rect.height())
 
         val secondActualPoint = secondActualPoint
 
         if (secondActualPoint != null) {
-
             val startDistance = startDistance
             val startSize = startSize
+            val startAngle = startAngle
+            val anchorAngle = anchorAngle
 
             if (startSize != null && startDistance != null) {
                 val actualDistance = MathUtil.getDistance(firstActualPoint, secondActualPoint)
-                size = (startSize * actualDistance / startDistance).toInt()
+                val sizeRatio = actualDistance / startDistance
+
+                size.set(
+                    (startSize.x * sizeRatio).toInt(),
+                    (startSize.y * sizeRatio).toInt())
             }
 
-            val startAngle = startAngle
-            val anchorAngle = anchorAngle
             if (startAngle != null && anchorAngle != null) {
                 val angle = MathUtil.getAngle(firstActualPoint, secondActualPoint)
-                image.rotation = anchorAngle + angle - startAngle
-            }
 
+                val resultRotation = anchorAngle + angle - startAngle
+                if (resultRotation != image.rotation) {
+                    image.rotation = resultRotation
+                }
+            }
         }
 
-        val sizeShift = (size - anchorSize) / 2
-        val left = anchorPoint.x + (firstActualPoint.x - firstStartPoint.x).toInt() - sizeShift
-        val top = anchorPoint.y + (firstActualPoint.y - firstStartPoint.y).toInt() - sizeShift
-        image.rect.set(left, top, left + size, top + size)
+        val dx = firstActualPoint.x - firstStartPoint.x
+        val dSizeX = size.x - anchorSize.x
+        val xSizeShift = dSizeX * anchorSizeRelativePoint.x
+        val left = (anchorPoint.x + dx - xSizeShift).toInt()
+
+        val dy = firstActualPoint.y - firstStartPoint.y
+        val dSizeY = size.y - anchorSize.y
+        val ySizeShift = dSizeY * anchorSizeRelativePoint.y
+        val top = (anchorPoint.y + dy - ySizeShift).toInt()
+
+        image.rect.set(left, top, left + size.x, top + size.y)
 
         onMovedCallback(firstActualPoint, image)
     }
