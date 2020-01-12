@@ -6,29 +6,28 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.content.res.TypedArray
 import android.graphics.*
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.animation.AccelerateInterpolator
-import android.widget.ImageView
 import androidx.annotation.ColorInt
 import androidx.annotation.Dimension
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
+import androidx.core.graphics.withSave
 import androidx.core.view.*
 import androidx.core.widget.addTextChangedListener
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
-import com.bumptech.glide.Glide
 import dev.sunnyday.postcreator.core.common.android.Dimen
+import dev.sunnyday.postcreator.core.common.android.InputStreamUtil
 import dev.sunnyday.postcreator.core.common.math.MathUtil
 import dev.sunnyday.postcreator.postcreatorboard.decorations.TextDecorator
 import dev.sunnyday.postcreator.postcreatorboard.touchtracker.ImageTouchTrackerFactory
 import dev.sunnyday.postcreator.postcreatorboard.touchtracker.TouchTracker
 import kotlinx.android.synthetic.main.postcreatorboard__view.view.*
-import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
@@ -48,7 +47,7 @@ class PostCreatorBoardView @JvmOverloads constructor(
         set(@ColorInt value) { textInput.setHintTextColor(value) }
 
     val images: List<PostCreatorImage>
-        get() = imagesMap.values.toList()
+        get() = imageItems.map { it.data }
 
     var text: String
         get() = textInput.text.toString()
@@ -57,15 +56,12 @@ class PostCreatorBoardView @JvmOverloads constructor(
     private var actionsColors: ColorStateList = ColorStateList.valueOf(Color.BLACK)
     private var actionsBorderWidth: Int = Dimen.dp(2, context).toInt()
 
-    private val imageViewsMap = mutableMapOf<UUID, ImageView>()
-    private val imagesMap = mutableMapOf<UUID, PostCreatorImage>()
+    private val imageItems = mutableListOf<ImageItem>()
 
     private var activeTouchTracker: TouchTracker? = null
     private val touchTrackerFactory = ImageTouchTrackerFactory()
     private val checkTouchSize = Dimen.dp(8, context).toInt()
 
-    private val locationOnScreenBuffer = intArrayOf(0,0)
-    private val imageTouchVectorBuffer = floatArrayOf(0f,0f)
     private val rotationMatrixBuffer = Matrix()
 
     private var deleteButtonCenterPointBuffer: PointF = PointF(0f, 0f)
@@ -189,37 +185,41 @@ class PostCreatorBoardView @JvmOverloads constructor(
     // region: Add image
 
     fun addImage(image: PostCreatorImage) {
-        if (imageViewsMap.containsKey(image.id))
+        if (containsImage(image))
             return
 
-        val imageView = layoutImage(image)
-        imageViewsMap[image.id] = imageView
-        imagesMap[image.id] = image
+        val drawable = resolveDrawable(image)
+            ?: return
 
-        Glide.with(context)
-            .load(image.source)
-            .into(imageView)
+        updateImageRect(image.rect, drawable)
+        imageItems.add(ImageItem(image, drawable))
+
+        invalidate()
     }
 
-    private fun layoutImage(image: PostCreatorImage): ImageView {
-        val imageView = ImageView(context).apply {
-            layoutParams = LayoutParams(0, 0).apply {
-                leftToLeft = PARENT_ID
-                topToTop = PARENT_ID
-            }
+    private fun containsImage(image: PostCreatorImage): Boolean =
+        imageItems.any { it.data.id == image.id }
+
+    private fun updateImageRect(rect: Rect, drawable: Drawable) {
+        if (drawable.intrinsicWidth == 0 || drawable.intrinsicHeight == 0)
+            return
+
+        val drawableRatio = drawable.intrinsicWidth.toFloat() / drawable.intrinsicHeight.toFloat()
+        val imageRatio = rect.width().toFloat() / rect.height().toFloat()
+
+        if (drawableRatio != imageRatio) {
+            val ratioRatio = drawableRatio / imageRatio
+            val width = (rect.width() * ratioRatio).toInt()
+            val horizontalInset = (rect.width() - width) / 2
+            rect.inset(horizontalInset, 0)
         }
+    }
 
-        val rect = image.rect
+    private fun resolveDrawable(image: PostCreatorImage): Drawable? {
+        val stream = InputStreamUtil.inputStreamFromUri(image.source, context)
+            ?: return null
 
-        if (rect.isEmpty) {
-            val size = Dimen.dp(92, context).toInt()
-            rect.set(0, 0, size, size)
-        }
-
-        updateImageView(imageView, image)
-
-        addView(imageView, indexOfChild(textInput))
-        return imageView
+        return Drawable.createFromStream(stream, image.id.toString())
     }
 
     // endregion
@@ -238,6 +238,30 @@ class PostCreatorBoardView @JvmOverloads constructor(
     private fun calculateInvisibleDeleteButtonTranslationY(): Float =
         (height - deleteButton.top).toFloat()
 
+    override fun onDraw(canvas: Canvas) {
+        drawImages(canvas)
+        super.onDraw(canvas)
+    }
+
+    private fun drawImages(canvas: Canvas) {
+        imageItems.forEach { item ->
+            canvas.withSave {
+                drawImage(item, this)
+            }
+        }
+    }
+
+    private fun drawImage(imageItem: ImageItem, canvas: Canvas) {
+        val (image, drawable) = imageItem
+
+        val rect = image.rect
+        canvas.translate(rect.left.toFloat(), rect.top.toFloat())
+        canvas.rotate(image.rotation, rect.width() / 2f, rect.height() / 2f)
+
+        drawable.setBounds(0, 0, rect.width(), rect.height())
+        drawable.draw(canvas)
+    }
+
     // region: onTouchEvent
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
@@ -254,10 +278,10 @@ class PostCreatorBoardView @JvmOverloads constructor(
     }
 
     private fun findTouchTracker(event: MotionEvent): TouchTracker? {
-        val image = findImageUnderTouch(event) ?: return null
+        val image = findImageItemUnderTouch(event) ?: return null
 
         return touchTrackerFactory.create(
-            image,
+            image.data,
             this::onImageMovingStarted,
             this::onImageMoved,
             this::onImageInteractionCompleted)
@@ -268,24 +292,8 @@ class PostCreatorBoardView @JvmOverloads constructor(
     }
 
     private fun onImageMoved(touchPoint: PointF, image: PostCreatorImage) {
-        val imageView = imageViewsMap[image.id] ?: return
-
-        updateImageView(imageView, image)
+        invalidate()
         setDeleteButtonActive(isDeleteAction(touchPoint))
-    }
-
-    private fun updateImageView(imageView: ImageView, image: PostCreatorImage) {
-        imageView.updateLayoutParams<LayoutParams> {
-            width = image.rect.width()
-            height = image.rect.height()
-
-            setMargins(
-                image.rect.left,
-                image.rect.top,
-                0, 0)
-        }
-
-        imageView.rotation = image.rotation
     }
 
     private fun isDeleteAction(touchPoint: PointF): Boolean {
@@ -341,65 +349,96 @@ class PostCreatorBoardView @JvmOverloads constructor(
 
         activeTouchTracker = null
 
-        if (isDeleteAction(touchPoint)) {
+        if (isInvisible(image.rect) || isDeleteAction(touchPoint)) {
             deleteImage(image)
         }
 
         hideDeleteButton()
     }
 
+    private fun isInvisible(rect: Rect): Boolean {
+        val maxRotatedWidthOffset = (rect.width() * 0.16f).toInt()
+        val maxRotatedHeightOffset = (rect.height() * 0.16f).toInt()
+
+        return rect.isEmpty || !rect.intersects(
+            -maxRotatedWidthOffset, -maxRotatedHeightOffset,
+            width + maxRotatedWidthOffset, height + maxRotatedHeightOffset)
+    }
+
     private fun deleteImage(image: PostCreatorImage) {
-        imagesMap.remove(image.id)
+        val item = imageItems.firstOrNull { it.data.id == image.id }
+            ?: return
 
-        imageViewsMap.remove(image.id)
-            ?.let(this::removeView)
+        imageItems.remove(item)
+        invalidate()
     }
 
-    private fun findImageUnderTouch(event: MotionEvent): PostCreatorImage? {
-        val x = event.rawX.toInt()
-        val y = event.rawY.toInt()
+    private fun findImageItemUnderTouch(event: MotionEvent): ImageItem? {
+        val x = event.x.toInt()
+        val y = event.y.toInt()
 
-        val rect = Rect()
-
-        return imageViewsMap.entries
+        val itemsUnderTouch = imageItems
             .reversed()
-            .firstOrNull { (_, imageView) ->
-                imageView.getGlobalVisibleRect(rect)
+            .filter { checkIsUnderTouch(x, y, it) }
 
-                rect.contains(x, y) && checkNonTransparentTouch(x, y, imageView)
-            }
-            ?.let { (id, _) -> imagesMap[id]}
+        if (itemsUnderTouch.isEmpty())
+            return null
+
+        return getFirstNonTransparentTouchedImage(x, y, itemsUnderTouch)
     }
 
-    private fun checkNonTransparentTouch(rawX: Int, rawY: Int, imageView: ImageView): Boolean {
-        var bitmap: Bitmap? = null
-        try {
-            imageView.getLocationOnScreen(locationOnScreenBuffer)
+    private fun checkIsUnderTouch(x: Int, y: Int, imageItem: ImageItem): Boolean =
+        getLocationInRotatedRect(x, y, imageItem.data.rect, -imageItem.data.rotation) != null
 
-            val imageX = rawX - locationOnScreenBuffer[0]
-            val imageY = rawY - locationOnScreenBuffer[1]
+    private fun getLocationInRotatedRect(x: Int, y: Int, rect: Rect, degrees: Float): FloatArray? {
+        val location = floatArrayOf(0f, 0f)
+        location[0] = x - rect.exactCenterX()
+        location[1] = y - rect.exactCenterY()
 
-            imageTouchVectorBuffer[0] = imageX.toFloat()
-            imageTouchVectorBuffer[1] = imageY.toFloat()
+        rotateVector(location, degrees)
 
-            rotationMatrixBuffer.reset()
-            rotationMatrixBuffer.setRotate(
-                -imageView.rotation, imageView.width / 2f, imageView.height / 2f)
-            rotationMatrixBuffer.mapVectors(imageTouchVectorBuffer)
+        location[0] = location[0] + rect.width() / 2
+        location[1] = location[1] + rect.height() / 2
 
-            val rotatedImageX = imageTouchVectorBuffer[0].toInt()
-            val rotatedImageY = imageTouchVectorBuffer[1].toInt()
-
-            bitmap = imageView.drawToBitmap(Bitmap.Config.ARGB_8888)
-            val touchAreaPixels =
-                getTouchPixels(rotatedImageX, rotatedImageY, checkTouchSize, bitmap)
-
-            return touchAreaPixels.any { it != Color.TRANSPARENT }
-        } catch (e: Throwable) {
-            return false
-        } finally {
-            bitmap?.recycle()
+        return if (checkInRect(location, rect.width(), rect.height())) {
+            location
+        } else {
+            null
         }
+    }
+
+    private fun checkInRect(location: FloatArray, width: Int, height: Int): Boolean =
+        location[0] >= 0 && location[0] < width && location[1] >= 0 && location[1] < height
+
+    private fun getFirstNonTransparentTouchedImage(
+        x: Int, y: Int, items: List<ImageItem>
+    ): ImageItem? {
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+
+        val touchedImage = items.firstOrNull {
+            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
+            drawImage(it, canvas)
+
+            checkNonTransparentTouch(x, y, bitmap)
+        }
+
+        bitmap.recycle()
+
+        return touchedImage
+    }
+
+    private fun checkNonTransparentTouch(x: Int, y: Int, bitmap: Bitmap): Boolean {
+        val touchAreaPixels = getTouchPixels(x, y, checkTouchSize, bitmap)
+        return touchAreaPixels.any { it != Color.TRANSPARENT }
+    }
+
+    private fun rotateVector(vector: FloatArray, degrees: Float) {
+        val rotationMatrix = rotationMatrixBuffer
+
+        rotationMatrix.reset()
+        rotationMatrix.setRotate(degrees, 0f, 0f)
+        rotationMatrix.mapVectors(vector)
     }
 
     private fun getTouchPixels(x: Int, y: Int, size: Int, bitmap: Bitmap): IntArray {
@@ -410,6 +449,9 @@ class PostCreatorBoardView @JvmOverloads constructor(
         val touchAreaTop = max(y - halfTouchSize, 0)
         val touchAreaBottom = min(y + halfTouchSize, bitmap.height)
         val height = touchAreaBottom - touchAreaTop
+
+        if (height <= 0 || width <= 0)
+            return intArrayOf()
 
         val touchAreaPixels = IntArray(width * height) {
             Color.TRANSPARENT
@@ -483,5 +525,9 @@ class PostCreatorBoardView @JvmOverloads constructor(
         fun onStopTrackingImage()
 
     }
+
+    private data class ImageItem(
+        val data: PostCreatorImage,
+        val drawable: Drawable)
 
 }
