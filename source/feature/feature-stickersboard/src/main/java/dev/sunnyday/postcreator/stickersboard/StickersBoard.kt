@@ -11,10 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.core.animation.doOnEnd
-import androidx.core.view.get
-import androidx.core.view.isVisible
-import androidx.core.view.postDelayed
-import androidx.core.view.updateLayoutParams
+import androidx.core.view.*
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -112,12 +109,12 @@ class StickersBoard private constructor(
                 val value = it.animatedValue as Float
                 val valueRect = evaluator.evaluate(value, rect, targetRect)
 
-                val tintColor = (0x80 * it.animatedFraction).toInt() shl 24
+                val tintColor = (0x99 * it.animatedFraction).toInt() shl 24
                 stickerView.imageTintList = ColorStateList.valueOf(tintColor)
 
                 stickerView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                    this.width = valueRect.width()
-                    this.height = valueRect.height()
+                    width = valueRect.width()
+                    height = valueRect.height()
 
                     topMargin = valueRect.top
                     leftMargin = valueRect.left
@@ -126,10 +123,11 @@ class StickersBoard private constructor(
 
             doOnEnd {
                 callback(sticker)
-                stickerView.isVisible = false
-
-                contentRoot.postDelayed(10) {
-                    dismiss()
+                contentRoot.post {
+                    stickerView.isInvisible = true
+                    contentRoot.post {
+                        dismiss()
+                    }
                 }
             }
 
