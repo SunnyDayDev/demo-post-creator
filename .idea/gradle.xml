@@ -14,9 +14,12 @@
             <option value="$PROJECT_DIR$/buildSrc" />
             <option value="$PROJECT_DIR$/source/core" />
             <option value="$PROJECT_DIR$/source/core/core-activityforresult" />
+            <option value="$PROJECT_DIR$/source/core/core-activitytracker" />
             <option value="$PROJECT_DIR$/source/core/core-app" />
             <option value="$PROJECT_DIR$/source/core/core-common" />
+            <option value="$PROJECT_DIR$/source/core/core-dialoginteractor" />
             <option value="$PROJECT_DIR$/source/core/core-permissions" />
+            <option value="$PROJECT_DIR$/source/core/core-snackbarinteractor" />
             <option value="$PROJECT_DIR$/source/domain" />
             <option value="$PROJECT_DIR$/source/domain/domain-backgrounds" />
             <option value="$PROJECT_DIR$/source/domain/domain-stickers" />

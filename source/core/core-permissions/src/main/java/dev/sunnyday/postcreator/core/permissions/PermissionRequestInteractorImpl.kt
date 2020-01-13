@@ -2,6 +2,7 @@ package dev.sunnyday.postcreator.core.permissions
 
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commit
+import dev.sunnyday.postcreator.core.activitytracker.ActivityTrackerObserver
 import io.reactivex.Completable
 import io.reactivex.disposables.Disposables
 import java.lang.ref.WeakReference
@@ -11,7 +12,7 @@ import javax.inject.Singleton
 
 @Singleton
 internal class PermissionRequestInteractorImpl @Inject constructor(
-    private val activityObserver: PermissionRequestInteractorActivityObserver
+    private val activityObserver: ActivityTrackerObserver
 ) : PermissionRequestInteractor {
 
     override fun requirePermission(request: PermissionRequest): Completable =

@@ -46,6 +46,8 @@ dependencies {
     implementation(project(PostCreator.Core.common))
     implementation(project(PostCreator.Core.permissions))
     implementation(project(PostCreator.Core.activityForResult))
+    implementation(project(PostCreator.Core.snackbarInteractor))
+    implementation(project(PostCreator.Core.dialogInteractor))
     implementation(project(PostCreator.Core.app))
     implementation(project(PostCreator.Domain.backgrounds))
     implementation(project(PostCreator.Domain.stickers))

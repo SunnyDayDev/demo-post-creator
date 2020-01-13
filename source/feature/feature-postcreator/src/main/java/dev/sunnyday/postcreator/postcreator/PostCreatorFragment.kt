@@ -1,5 +1,6 @@
 package dev.sunnyday.postcreator.postcreator
 
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
@@ -9,18 +10,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
-import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.getSystemService
 import androidx.core.util.keyIterator
 import androidx.core.util.set
 import androidx.core.util.valueIterator
+import androidx.core.view.drawToBitmap
 import androidx.core.view.updateLayoutParams
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.get
 import dagger.android.support.DaggerFragment
 import dev.sunnyday.postcreator.core.app.rx.AppSchedulers
 import dev.sunnyday.postcreator.core.common.android.Dimen
 import dev.sunnyday.postcreator.core.common.android.attachToLifecycle
-import dev.sunnyday.postcreator.core.permissions.PermissionsNotGrantedError
 import dev.sunnyday.postcreator.domain.backgrounds.Background
 import dev.sunnyday.postcreator.domain.backgrounds.BackgroundsRepository
 import dev.sunnyday.postcreator.domain.backgrounds.resolver.BackgroundResolver
@@ -28,9 +29,9 @@ import dev.sunnyday.postcreator.domain.stickers.Sticker
 import dev.sunnyday.postcreator.domain.stickers.StickersRepository
 import dev.sunnyday.postcreator.drawablechooser.DrawableChooserListener
 import dev.sunnyday.postcreator.drawablechooser.DrawableItem
-import dev.sunnyday.postcreator.postcreator.operation.AddBackgroundFromDeviceOperation
-import dev.sunnyday.postcreator.postcreator.operation.DrawViewToFileOperation
 import dev.sunnyday.postcreator.postcreator.styles.TextStyleSwitcher
+import dev.sunnyday.postcreator.postcreator.viewModel.PostCreatorOperationsViewModel
+import dev.sunnyday.postcreator.postcreator.viewModel.PostCreatorViewModelFactory
 import dev.sunnyday.postcreator.postcreatorboard.PostCreatorBoardView
 import dev.sunnyday.postcreator.postcreatorboard.PostCreatorImage
 import dev.sunnyday.postcreator.stickersboard.StickerBoardItem
@@ -55,22 +56,23 @@ class PostCreatorFragment : DaggerFragment() {
     internal lateinit var backgroundsResolver: BackgroundResolver
 
     @Inject
-    internal lateinit var saveOperation: DrawViewToFileOperation
-
-    @Inject
-    internal lateinit var addBackgroundOperation: AddBackgroundFromDeviceOperation
-
-    @Inject
     internal lateinit var textStyleSwitcher: TextStyleSwitcher
 
     @Inject
     internal lateinit var schedulers: AppSchedulers
+
+    @Inject
+    internal lateinit var viewModelFactory: PostCreatorViewModelFactory
 
     private var backgrounds = LongSparseArray<Background>()
     private var backgroundsChooserItems = LongSparseArray<DrawableItem>()
     private var selectedBackgroundId: Long? = null
 
     private val dispose = CompositeDisposable()
+
+    private val viewModel by lazy<PostCreatorOperationsViewModel> {
+        ViewModelProvider(this, viewModelFactory).get()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -218,9 +220,7 @@ class PostCreatorFragment : DaggerFragment() {
     }
 
     private fun onAddBackgroundRequested() {
-        addBackgroundOperation.execute()
-            .subscribeBy(onError = this::checkPermissionError)
-            .let(dispose::add)
+        viewModel.onAddBackground()
     }
 
     private fun chooserItemForBackground(background: Background): DrawableItem =
@@ -230,10 +230,15 @@ class PostCreatorFragment : DaggerFragment() {
 
     private fun setupStickersButton() {
         stickersButton.setOnClickListener {
-            stickersRepository.stickers()
-                .observeOn(schedulers.ui)
-                .subscribeBy(onSuccess = this::showStickersBoard)
+            showStickersBoard()
         }
+    }
+
+    private fun showStickersBoard() {
+        stickersRepository.stickers()
+            .observeOn(schedulers.ui)
+            .subscribeBy(onSuccess = this::showStickersBoard)
+            .let(dispose::add)
     }
 
     private fun showStickersBoard(stickers: List<Sticker>) {
@@ -280,22 +285,25 @@ class PostCreatorFragment : DaggerFragment() {
 
     private fun setupSaveButton() {
         saveButton.setOnClickListener {
-            view?.requestFocus()
-            creatorView.isEnabled = false
-
-            hideKeyboard()
-
-            saveOperation.drawToFile(creatorView)
-                .observeOn(schedulers.ui)
-                .doFinally { creatorView.isEnabled = true }
-                .subscribeBy(onError = this::checkPermissionError)
-                .let(dispose::add)
+            savePost()
         }
 
         updateSaveButtonState()
         creatorView.addTextChangedListener(object : PostCreatorBoardView.TextChangedListener {
             override fun onTextChanged(text: String) = updateSaveButtonState()
         })
+    }
+
+    private fun savePost() {
+        view?.requestFocus()
+        creatorView.isEnabled = false
+
+        hideKeyboard()
+
+        val postBitmap = creatorView.drawToBitmap(Bitmap.Config.ARGB_8888)
+        creatorView.isEnabled = true
+
+        viewModel.savePostImage(postBitmap)
     }
 
     private fun hideKeyboard() {
@@ -322,31 +330,15 @@ class PostCreatorFragment : DaggerFragment() {
     private fun setupScrollableContent() {
         creatorView.addImageStateListener(object : PostCreatorBoardView.ImageStateListener {
 
-            override fun onStartTrackingImage() {
-                scrollableContent.isScrollEnabled = false
-            }
+            override fun onStartTrackingImage() = setScrollingEnabled(false)
 
-            override fun onStopTrackingImage() {
-                scrollableContent.isScrollEnabled = true
-            }
+            override fun onStopTrackingImage() = setScrollingEnabled(true)
 
         })
     }
 
-    private fun checkPermissionError(error: Throwable) {
-        if (error is PermissionsNotGrantedError) {
-            showMessageDialog(R.string.postcreator__prompt__permission_not_granted_error)
-        }
-    }
-
-    private fun showMessageDialog(@StringRes textId: Int) {
-        val context = context ?: return
-
-        AlertDialog.Builder(context)
-            .setMessage(textId)
-            .setPositiveButton(android.R.string.ok, null)
-            .show()
-            .attachToLifecycle(lifecycle)
+    private fun setScrollingEnabled(isEnabled: Boolean) {
+        scrollableContent.isScrollEnabled = isEnabled
     }
 
     override fun onDestroyView() {

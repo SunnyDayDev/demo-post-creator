@@ -7,9 +7,10 @@ internal class ImageTouchTrackerFactory {
 
     fun create(
         image: PostCreatorImage,
-        onStarted: (PointF, PostCreatorImage) -> Unit,
-        onMoved: (PointF, PostCreatorImage) -> Unit,
-        onComplete: (PointF, PostCreatorImage) -> Unit
-    ): TouchTracker = ImageTouchTracker(image, onStarted, onMoved, onComplete)
+        onClick: (PointF, PostCreatorImage) -> Unit,
+        onStartMove: (PointF, PostCreatorImage) -> Unit,
+        onMove: (PointF, PostCreatorImage) -> Unit,
+        onCompleteMove: (PointF, PostCreatorImage) -> Unit
+    ): TouchTracker = ImageTouchTracker(image, onClick, onStartMove, onMove, onCompleteMove)
 
 }

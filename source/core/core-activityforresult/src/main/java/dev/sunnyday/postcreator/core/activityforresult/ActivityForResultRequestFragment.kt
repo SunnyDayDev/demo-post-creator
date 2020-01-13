@@ -65,13 +65,13 @@ internal class ActivityForResultRequestFragment<T: Any> private constructor(
     }
 
     private data class ExecutingRequest<T: Any>(
-        val request: ActivityForResultRequest<T>,
+        val request: ActivityRequest<T>,
         val onResult: (T?) -> Unit,
         val onError: (Error) -> Unit)
 
     companion object {
 
-        fun <T: Any> create(request: ActivityForResultRequest<T>,
+        fun <T: Any> create(request: ActivityRequest<T>,
                             onResult: (T?) -> Unit,
                             onError: (Error) -> Unit): ActivityForResultRequestFragment<T> {
             val executingRequest = ExecutingRequest(request, onResult, onError)

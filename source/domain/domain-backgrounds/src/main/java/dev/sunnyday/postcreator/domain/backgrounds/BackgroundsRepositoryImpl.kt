@@ -9,7 +9,7 @@ import dev.sunnyday.postcreator.domain.backgrounds.db.BackgroundEntity
 import dev.sunnyday.postcreator.domain.backgrounds.db.BackgroundEntityType
 import dev.sunnyday.postcreator.domain.backgrounds.db.BackgroundsDao
 import dev.sunnyday.postcreator.domain.backgrounds.source.DefaultBackgroundsSource
-import dev.sunnyday.postcreator.domain.backgrounds.util.InputStreamUtil
+import dev.sunnyday.postcreator.core.common.android.InputStreamUtil
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single

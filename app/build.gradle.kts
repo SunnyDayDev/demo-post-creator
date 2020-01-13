@@ -16,8 +16,8 @@ android {
         applicationId = "dev.sunnyday.postcreator"
         minSdkVersion(Android.minSdk)
         targetSdkVersion(Android.targetSdk)
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.1"
         
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -70,8 +70,11 @@ dependencies {
     Room.addTo(this)
 
     implementation(project(PostCreator.Core.common))
+    implementation(project(PostCreator.Core.activityTracker))
     implementation(project(PostCreator.Core.permissions))
     implementation(project(PostCreator.Core.activityForResult))
+    implementation(project(PostCreator.Core.snackbarInteractor))
+    implementation(project(PostCreator.Core.dialogInteractor))
     implementation(project(PostCreator.Core.app))
     implementation(project(PostCreator.Domain.backgrounds))
     implementation(project(PostCreator.Domain.stickers))

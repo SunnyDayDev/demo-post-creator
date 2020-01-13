@@ -2,13 +2,13 @@ package dev.sunnyday.postcreator.postcreator.operation
 
 import android.content.Context
 import android.net.Uri
-import dev.sunnyday.postcreator.core.activityforresult.ActivityForResultRequest
-import dev.sunnyday.postcreator.core.activityforresult.ActivityForResultRequestInteractor
-import dev.sunnyday.postcreator.core.app.activityreqest.AppActivityForResultRequests
-import dev.sunnyday.postcreator.core.app.activityreqest.AppActivityForResultRequests.CropImage
-import dev.sunnyday.postcreator.core.app.activityreqest.AppActivityForResultRequests.PickImage
+import dev.sunnyday.postcreator.core.activityforresult.ActivityRequestInteractor
+import dev.sunnyday.postcreator.core.app.activityreqest.AppActivityRequests.CropImage
+import dev.sunnyday.postcreator.core.app.activityreqest.AppActivityRequests.PickImage
 import dev.sunnyday.postcreator.core.app.permissions.AppPermissionRequest
+import dev.sunnyday.postcreator.core.dialoginteractor.DialogInteractor
 import dev.sunnyday.postcreator.core.permissions.PermissionRequestInteractor
+import dev.sunnyday.postcreator.core.permissions.PermissionsNotGrantedError
 import dev.sunnyday.postcreator.domain.backgrounds.BackgroundsRepository
 import dev.sunnyday.postcreator.postcreator.R
 import io.reactivex.Completable
@@ -17,8 +17,9 @@ import javax.inject.Inject
 
 internal class AddBackgroundFromDeviceOperationImpl @Inject constructor(
     private val permissionsInteractor: PermissionRequestInteractor,
-    private val activityInteractor: ActivityForResultRequestInteractor,
+    private val activityInteractor: ActivityRequestInteractor,
     private val backgroundsRepository: BackgroundsRepository,
+    private val errorHandler: OperationErrorHandler,
     private val context: Context
 ) : AddBackgroundFromDeviceOperation {
 
@@ -27,6 +28,7 @@ internal class AddBackgroundFromDeviceOperationImpl @Inject constructor(
             .andThen(pickImage())
             .flatMap(this::cropImage)
             .flatMapCompletable(backgroundsRepository::addBackground)
+            .onErrorResumeNext(errorHandler::handle)
 
     private fun pickImage(): Maybe<Uri> {
         val chooserTitle = context.getString(R.string.postcreator__prompt__add_background_title)

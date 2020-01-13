@@ -1,4 +1,4 @@
-package dev.sunnyday.postcreator.core.activityforresult
+package dev.sunnyday.postcreator.core.activitytracker
 
 import android.app.Activity
 import android.app.Application
@@ -9,15 +9,11 @@ import io.reactivex.subjects.BehaviorSubject
 import javax.inject.Inject
 import javax.inject.Singleton
 
-internal interface ActivityForResultRequestInteractorActivityObserver {
-    val lastStartedActivity: Observable<Optional<Activity>>
-}
-
 @Singleton
-internal class ActivityForResultRequestInteractorActivityTracker @Inject constructor()
-    : Application.ActivityLifecycleCallbacks, ActivityForResultRequestInteractorActivityObserver {
+internal class ActivityTracker @Inject constructor()
+    : Application.ActivityLifecycleCallbacks, ActivityTrackerObserver {
 
-    private val startedActivities = BehaviorSubject.createDefault<Set<Activity>>(emptySet())
+    private val startedActivities = BehaviorSubject.createDefault<List<Activity>>(emptyList())
 
     override val lastStartedActivity: Observable<Optional<Activity>> =
         startedActivities.map { Optional(it.lastOrNull()) }
@@ -25,7 +21,7 @@ internal class ActivityForResultRequestInteractorActivityTracker @Inject constru
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) { }
 
     override fun onActivityStarted(activity: Activity) {
-        val currentlyStarted = startedActivities.value ?: emptySet()
+        val currentlyStarted = startedActivities.value ?: emptyList()
         startedActivities.onNext(currentlyStarted + activity)
     }
 
@@ -35,7 +31,10 @@ internal class ActivityForResultRequestInteractorActivityTracker @Inject constru
 
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) { }
 
-    override fun onActivityStopped(activity: Activity) { }
+    override fun onActivityStopped(activity: Activity) {
+        val currentlyStarted = startedActivities.value ?: emptyList()
+        startedActivities.onNext(currentlyStarted - activity)
+    }
 
     override fun onActivityDestroyed(activity: Activity) { }
 

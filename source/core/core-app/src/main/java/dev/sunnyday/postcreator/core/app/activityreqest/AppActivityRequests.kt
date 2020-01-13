@@ -5,15 +5,16 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import com.theartofdev.edmodo.cropper.CropImageView
-import dev.sunnyday.postcreator.core.activityforresult.ActivityForResultRequest
+import dev.sunnyday.postcreator.core.activityforresult.ActivityRequest
+import dev.sunnyday.postcreator.core.app.R
 import com.theartofdev.edmodo.cropper.CropImage as ImageCropper
 
 
-sealed class AppActivityForResultRequests<T: Any>(code: Int) : ActivityForResultRequest<T>(code) {
+sealed class AppActivityRequests<T: Any>(code: Int) : ActivityRequest<T>(code) {
 
     class PickImage(
         private val chooserTitle: String? = null
-    ) : AppActivityForResultRequests<Uri>(1) {
+    ) : AppActivityRequests<Uri>(1) {
 
         override fun createIntent(context: Context): Intent {
             val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
@@ -34,7 +35,7 @@ sealed class AppActivityForResultRequests<T: Any>(code: Int) : ActivityForResult
     class CropImage(
         private val imageUri: Uri,
         private val widthToHeightRatio: Float? = null
-    ) : AppActivityForResultRequests<Uri>(2) {
+    ) : AppActivityRequests<Uri>(2) {
 
         override fun createIntent(context: Context): Intent =
             ImageCropper.activity(imageUri)
@@ -52,6 +53,27 @@ sealed class AppActivityForResultRequests<T: Any>(code: Int) : ActivityForResult
             val result: ImageCropper.ActivityResult = ImageCropper.getActivityResult(data)
             return result.uri
         }
+
+    }
+
+    class Share(
+        private val dataUri: Uri,
+        private val mimeType: String
+    ) : AppActivityRequests<Unit>(3) {
+
+        override fun createIntent(context: Context): Intent {
+            val shareIntent: Intent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_STREAM, dataUri)
+                type = mimeType
+            }
+
+            return Intent.createChooser(
+                shareIntent, context.getString(R.string.core_app__prompt__share))
+        }
+
+        override fun mapResult(resultCode: Int, data: Intent?) =
+            if (resultCode != Activity.RESULT_OK) null else Unit
 
     }
 

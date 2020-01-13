@@ -9,7 +9,7 @@ import android.net.Uri
 import androidx.core.content.ContextCompat
 import dev.sunnyday.postcreator.domain.backgrounds.Background
 import dev.sunnyday.postcreator.domain.backgrounds.HasBackgroundIcon
-import dev.sunnyday.postcreator.domain.backgrounds.util.InputStreamUtil
+import dev.sunnyday.postcreator.core.common.android.InputStreamUtil
 import javax.inject.Inject
 
 internal class BackgroundResolverImpl @Inject constructor(
