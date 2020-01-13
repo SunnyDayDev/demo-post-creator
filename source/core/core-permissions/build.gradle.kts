@@ -43,7 +43,7 @@ dependencies {
     implementation(AndroidX.fragmentKtx)
 
     Rx.addTo(this)
-    Dagger.addTo(this, useAndroid = true)
+    Dagger.addTo(this)
 
     implementation(project(PostCreator.Core.common))
     implementation(project(PostCreator.Core.activityTracker))

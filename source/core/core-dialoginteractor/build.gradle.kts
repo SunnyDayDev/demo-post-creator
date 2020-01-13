@@ -39,10 +39,9 @@ android {
 dependencies {
     implementation(Kotlin.stdlibJdk8)
     implementation(AndroidX.appCompat)
-    implementation(AndroidX.material)
 
     Rx.addTo(this)
-    Dagger.addTo(this, useAndroid = true)
+    Dagger.addTo(this)
 
     implementation(project(PostCreator.Core.common))
     implementation(project(PostCreator.Core.activityTracker))
