@@ -50,7 +50,9 @@ class PostCreatorBoardView @JvmOverloads constructor(
         set(@ColorInt value) { textInput.setHintTextColor(value) }
 
     val images: List<PostCreatorImage>
-        get() = imageItems.map { it.data }
+        get() = imageItems
+            .filterNot { it.isDeleted }
+            .map { it.data }
 
     var text: String
         get() = textInput.text.toString()
@@ -387,8 +389,25 @@ class PostCreatorBoardView @JvmOverloads constructor(
         val item = imageItems.firstOrNull { it.data.id == image.id }
             ?: return
 
-        imageItems.remove(item)
-        invalidate()
+        deleteWithAnimation(item)
+    }
+
+    private fun deleteWithAnimation(image: ImageItem) {
+        image.isDeleted = true
+
+        ValueAnimator.ofInt(255, 0).apply {
+            addUpdateListener {
+                image.drawable.alpha = it.animatedValue as Int
+                invalidate()
+            }
+            doOnEnd {
+                imageItems.remove(image)
+                invalidate()
+            }
+
+            duration = 250
+            start()
+        }
     }
 
     private fun findImageItemUnderTouch(event: MotionEvent): ImageItem? {
@@ -525,6 +544,7 @@ class PostCreatorBoardView @JvmOverloads constructor(
 
     private data class ImageItem(
         val data: PostCreatorImage,
-        val drawable: Drawable)
+        val drawable: Drawable,
+        var isDeleted: Boolean = false)
 
 }
