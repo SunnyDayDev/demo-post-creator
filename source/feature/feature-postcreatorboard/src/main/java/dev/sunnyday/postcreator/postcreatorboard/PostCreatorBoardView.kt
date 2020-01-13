@@ -8,9 +8,11 @@ import android.content.res.TypedArray
 import android.graphics.*
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
+import android.os.SystemClock
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.MotionEvent
+import android.view.View
 import android.view.animation.AccelerateInterpolator
 import androidx.annotation.ColorInt
 import androidx.annotation.Dimension
@@ -282,16 +284,31 @@ class PostCreatorBoardView @JvmOverloads constructor(
 
         return touchTrackerFactory.create(
             image.data,
-            this::onImageMovingStarted,
-            this::onImageMoved,
-            this::onImageInteractionCompleted)
+            onClick = { point, _ -> onImageClick(point) },
+            onStartMove = { _, _ -> onImageStartMove() },
+            onMove = { point, _ -> onImageMove(point) },
+            onCompleteMove = this::onImageInteractionComplete)
     }
 
-    private fun onImageMovingStarted(touchPoint: PointF, image: PostCreatorImage) {
+    private fun onImageClick(point: PointF) {
+        simulateTapOnView(point, textInput)
+    }
+
+    private fun simulateTapOnView(point: PointF, view: View) {
+        view.onTouchEvent(MotionEvent.obtain(
+            SystemClock.uptimeMillis(), SystemClock.uptimeMillis(),
+            MotionEvent.ACTION_DOWN, point.x, point.y, 0))
+
+        view.onTouchEvent(MotionEvent.obtain(
+            SystemClock.uptimeMillis(), SystemClock.uptimeMillis(),
+            MotionEvent.ACTION_UP, point.x, point.y, 0))
+    }
+
+    private fun onImageStartMove() {
         showDeleteButton()
     }
 
-    private fun onImageMoved(touchPoint: PointF, image: PostCreatorImage) {
+    private fun onImageMove(touchPoint: PointF) {
         invalidate()
         setDeleteButtonActive(isDeleteAction(touchPoint))
     }
@@ -344,7 +361,7 @@ class PostCreatorBoardView @JvmOverloads constructor(
         }
     }
 
-    private fun onImageInteractionCompleted(touchPoint: PointF, image: PostCreatorImage) {
+    private fun onImageInteractionComplete(touchPoint: PointF, image: PostCreatorImage) {
         notifyImageTrackingStopped()
 
         activeTouchTracker = null
