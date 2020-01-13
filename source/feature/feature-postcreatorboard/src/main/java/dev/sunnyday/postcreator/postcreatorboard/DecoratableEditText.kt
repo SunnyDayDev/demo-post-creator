@@ -3,6 +3,7 @@ package dev.sunnyday.postcreator.postcreatorboard
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
+import android.view.MotionEvent
 import androidx.appcompat.widget.AppCompatEditText
 import dev.sunnyday.postcreator.postcreatorboard.decorations.TextDecorator
 import kotlin.math.max
@@ -71,10 +72,6 @@ internal class DecoratableEditText @JvmOverloads constructor(
         val canvas = Canvas(bitmap)
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
 
-        if (layout.height < height) {
-            canvas.translate(0f, (height - layout.height) / 2f)
-        }
-
         decorators.forEach {
             it.decorateText(canvas, lines)
         }
@@ -92,7 +89,7 @@ internal class DecoratableEditText @JvmOverloads constructor(
 
     private fun invalidateDecorationTextLines() {
         val layout = layout ?: return
-        val text = text.toString()
+        val text = text ?: return
 
         val lines = mutableListOf<TextDecorator.Line>()
 
@@ -106,12 +103,15 @@ internal class DecoratableEditText @JvmOverloads constructor(
 
             if (lineText.isEmpty()) continue
 
-            val lineWidth = layout.paint.measureText(lineText).toInt()
-            val widthDiff = (layout.width - lineWidth) / 2
             val bounds = Rect()
             layout.getLineBounds(i, bounds)
-            bounds.offset(paddingLeft, paddingTop)
-            bounds.inset(widthDiff, 0)
+
+            val verticalOffset = if (layout.height < height) (height - layout.height) / 2 else 0
+            bounds.offset(paddingLeft, paddingTop + verticalOffset)
+
+            val lineWidth = layout.paint.measureText(lineText).toInt()
+            val lineInset = (layout.width - lineWidth) / 2
+            bounds.inset(lineInset, 0)
 
             lines.add(TextDecorator.Line(lineText, bounds))
         }
