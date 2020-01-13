@@ -28,16 +28,29 @@ internal class DialogInteractorImpl @Inject constructor(
         message: String,
         activity: FragmentActivity
     ): Single<Unit> = Single.create { emitter ->
-        val dialog = AlertDialog.Builder(activity)
-            .setMessage(message)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                emitter.onSuccess(Unit)
-            }
-            .show()
+        var shownDialog: AlertDialog? = null
 
-        dialog.attachToLifecycle(activity.lifecycle)
+        activity.runOnUiThread {
+            if (emitter.isDisposed) return@runOnUiThread
+
+            val dialog = AlertDialog.Builder(activity)
+                .setMessage(message)
+                .setPositiveButton(android.R.string.ok) { _, _ ->
+                    emitter.onSuccess(Unit)
+                }
+                .show()
+                .also { shownDialog = it }
+
+            dialog.attachToLifecycle(activity.lifecycle, onDismiss = { isManualDismiss ->
+                if (isManualDismiss) {
+                    emitter.onSuccess(Unit)
+                }
+            })
+        }
 
         emitter.setDisposable(Disposables.fromAction {
+            val dialog = shownDialog ?: return@fromAction
+
             if (dialog.isShowing) {
                 dialog.dismiss()
             }
