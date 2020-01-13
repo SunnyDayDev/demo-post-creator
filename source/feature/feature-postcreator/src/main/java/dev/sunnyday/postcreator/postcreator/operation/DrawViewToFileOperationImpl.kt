@@ -17,7 +17,6 @@ import dev.sunnyday.postcreator.core.app.rx.AppSchedulers
 import dev.sunnyday.postcreator.core.app.permissions.AppPermissionRequest
 import dev.sunnyday.postcreator.core.permissions.PermissionRequestInteractor
 import dev.sunnyday.postcreator.core.snackbarinteractor.SnackbarInteractor
-import dev.sunnyday.postcreator.postcreator.BuildConfig
 import dev.sunnyday.postcreator.postcreator.R
 import dev.sunnyday.postcreator.postcreator.provider.PostShareProvider
 import io.reactivex.Completable
@@ -32,6 +31,7 @@ internal class DrawViewToFileOperationImpl @Inject constructor(
     private val permissionsInteractor: PermissionRequestInteractor,
     private val snackbarInteractor: SnackbarInteractor,
     private val activityInteractor: ActivityRequestInteractor,
+    private val errorHandler: OperationErrorHandler,
     private val schedulers: AppSchedulers
 ) : DrawViewToFileOperation {
 
@@ -41,6 +41,7 @@ internal class DrawViewToFileOperationImpl @Inject constructor(
             .observeOn(schedulers.background)
             .flatMap(this::save)
             .flatMapCompletable(this::notifySaved)
+            .onErrorResumeNext(errorHandler::handle)
 
     private fun drawViewToBitmap(view: View): Single<Bitmap> = Single.fromCallable {
         view.drawToBitmap(Bitmap.Config.ARGB_8888)

@@ -9,8 +9,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
-import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.getSystemService
 import androidx.core.util.keyIterator
 import androidx.core.util.set
@@ -20,7 +18,6 @@ import dagger.android.support.DaggerFragment
 import dev.sunnyday.postcreator.core.app.rx.AppSchedulers
 import dev.sunnyday.postcreator.core.common.android.Dimen
 import dev.sunnyday.postcreator.core.common.android.attachToLifecycle
-import dev.sunnyday.postcreator.core.permissions.PermissionsNotGrantedError
 import dev.sunnyday.postcreator.domain.backgrounds.Background
 import dev.sunnyday.postcreator.domain.backgrounds.BackgroundsRepository
 import dev.sunnyday.postcreator.domain.backgrounds.resolver.BackgroundResolver
@@ -38,7 +35,6 @@ import dev.sunnyday.postcreator.stickersboard.StickersBoard
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.subscribeBy
 import kotlinx.android.synthetic.main.postcreator__fragment.*
-import timber.log.Timber
 import java.util.ArrayList
 import javax.inject.Inject
 import kotlin.math.min
@@ -220,7 +216,7 @@ class PostCreatorFragment : DaggerFragment() {
 
     private fun onAddBackgroundRequested() {
         addBackgroundOperation.execute()
-            .subscribeBy(onError = this::checkPermissionError)
+            .subscribeBy()
             .let(dispose::add)
     }
 
@@ -304,7 +300,7 @@ class PostCreatorFragment : DaggerFragment() {
         saveOperation.drawToFile(creatorView)
             .observeOn(schedulers.ui)
             .doFinally { creatorView.isEnabled = true }
-            .subscribeBy(onError = this::checkPermissionError)
+            .subscribeBy()
             .let(dispose::add)
     }
 
@@ -341,24 +337,6 @@ class PostCreatorFragment : DaggerFragment() {
 
     private fun setScrollingEnabled(isEnabled: Boolean) {
         scrollableContent.isScrollEnabled = isEnabled
-    }
-
-    private fun checkPermissionError(error: Throwable) {
-        if (error is PermissionsNotGrantedError) {
-            showMessageDialog(R.string.postcreator__prompt__permission_not_granted_error)
-        } else {
-            Timber.e(error)
-        }
-    }
-
-    private fun showMessageDialog(@StringRes textId: Int) {
-        val context = context ?: return
-
-        AlertDialog.Builder(context)
-            .setMessage(textId)
-            .setPositiveButton(android.R.string.ok, null)
-            .show()
-            .attachToLifecycle(lifecycle)
     }
 
     override fun onDestroyView() {
