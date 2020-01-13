@@ -1,5 +1,6 @@
 package dev.sunnyday.postcreator.postcreator
 
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
@@ -13,7 +14,10 @@ import androidx.core.content.getSystemService
 import androidx.core.util.keyIterator
 import androidx.core.util.set
 import androidx.core.util.valueIterator
+import androidx.core.view.drawToBitmap
 import androidx.core.view.updateLayoutParams
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.get
 import dagger.android.support.DaggerFragment
 import dev.sunnyday.postcreator.core.app.rx.AppSchedulers
 import dev.sunnyday.postcreator.core.common.android.Dimen
@@ -25,9 +29,9 @@ import dev.sunnyday.postcreator.domain.stickers.Sticker
 import dev.sunnyday.postcreator.domain.stickers.StickersRepository
 import dev.sunnyday.postcreator.drawablechooser.DrawableChooserListener
 import dev.sunnyday.postcreator.drawablechooser.DrawableItem
-import dev.sunnyday.postcreator.postcreator.operation.AddBackgroundFromDeviceOperation
-import dev.sunnyday.postcreator.postcreator.operation.DrawViewToFileOperation
 import dev.sunnyday.postcreator.postcreator.styles.TextStyleSwitcher
+import dev.sunnyday.postcreator.postcreator.viewModel.PostCreatorOperationsViewModel
+import dev.sunnyday.postcreator.postcreator.viewModel.PostCreatorViewModelFactory
 import dev.sunnyday.postcreator.postcreatorboard.PostCreatorBoardView
 import dev.sunnyday.postcreator.postcreatorboard.PostCreatorImage
 import dev.sunnyday.postcreator.stickersboard.StickerBoardItem
@@ -52,22 +56,23 @@ class PostCreatorFragment : DaggerFragment() {
     internal lateinit var backgroundsResolver: BackgroundResolver
 
     @Inject
-    internal lateinit var saveOperation: DrawViewToFileOperation
-
-    @Inject
-    internal lateinit var addBackgroundOperation: AddBackgroundFromDeviceOperation
-
-    @Inject
     internal lateinit var textStyleSwitcher: TextStyleSwitcher
 
     @Inject
     internal lateinit var schedulers: AppSchedulers
+
+    @Inject
+    internal lateinit var viewModelFactory: PostCreatorViewModelFactory
 
     private var backgrounds = LongSparseArray<Background>()
     private var backgroundsChooserItems = LongSparseArray<DrawableItem>()
     private var selectedBackgroundId: Long? = null
 
     private val dispose = CompositeDisposable()
+
+    private val viewModel by lazy<PostCreatorOperationsViewModel> {
+        ViewModelProvider(this, viewModelFactory).get()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -215,9 +220,7 @@ class PostCreatorFragment : DaggerFragment() {
     }
 
     private fun onAddBackgroundRequested() {
-        addBackgroundOperation.execute()
-            .subscribeBy()
-            .let(dispose::add)
+        viewModel.onAddBackground()
     }
 
     private fun chooserItemForBackground(background: Background): DrawableItem =
@@ -297,11 +300,10 @@ class PostCreatorFragment : DaggerFragment() {
 
         hideKeyboard()
 
-        saveOperation.drawToFile(creatorView)
-            .observeOn(schedulers.ui)
-            .doFinally { creatorView.isEnabled = true }
-            .subscribeBy()
-            .let(dispose::add)
+        val postBitmap = creatorView.drawToBitmap(Bitmap.Config.ARGB_8888)
+        creatorView.isEnabled = true
+
+        viewModel.savePostImage(postBitmap)
     }
 
     private fun hideKeyboard() {

@@ -8,9 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import android.view.View
 import androidx.core.content.FileProvider
-import androidx.core.view.drawToBitmap
 import dev.sunnyday.postcreator.core.activityforresult.ActivityRequestInteractor
 import dev.sunnyday.postcreator.core.app.activityreqest.AppActivityRequests
 import dev.sunnyday.postcreator.core.app.rx.AppSchedulers
@@ -26,26 +24,21 @@ import java.io.FileOutputStream
 import java.io.OutputStream
 import javax.inject.Inject
 
-internal class DrawViewToFileOperationImpl @Inject constructor(
+internal class SavePostOperationImpl @Inject constructor(
     private val context: Context,
     private val permissionsInteractor: PermissionRequestInteractor,
     private val snackbarInteractor: SnackbarInteractor,
     private val activityInteractor: ActivityRequestInteractor,
     private val errorHandler: OperationErrorHandler,
     private val schedulers: AppSchedulers
-) : DrawViewToFileOperation {
+) : SavePostOperation {
 
-    override fun drawToFile(view: View): Completable =
+    override fun savePostImage(bitmap: Bitmap): Completable =
         permissionsInteractor.requirePermission(AppPermissionRequest.Storage)
-            .andThen(drawViewToBitmap(view))
             .observeOn(schedulers.background)
-            .flatMap(this::save)
+            .andThen(save(bitmap))
             .flatMapCompletable(this::notifySaved)
             .onErrorResumeNext(errorHandler::handle)
-
-    private fun drawViewToBitmap(view: View): Single<Bitmap> = Single.fromCallable {
-        view.drawToBitmap(Bitmap.Config.ARGB_8888)
-    }
 
     private fun save(bitmap: Bitmap): Single<Uri> = Single.fromCallable {
         val time = System.currentTimeMillis()

@@ -30,11 +30,8 @@ internal class DialogInteractorImpl @Inject constructor(
     ): Single<Unit> = Single.create { emitter ->
         val dialog = AlertDialog.Builder(activity)
             .setMessage(message)
-            .setPositiveButton(android.R.string.ok, null)
-            .setOnDismissListener {
-                if (!emitter.isDisposed) {
-                    emitter.onSuccess(Unit)
-                }
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                emitter.onSuccess(Unit)
             }
             .show()
 
