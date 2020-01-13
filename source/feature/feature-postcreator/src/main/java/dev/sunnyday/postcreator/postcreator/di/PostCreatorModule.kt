@@ -4,8 +4,8 @@ import dagger.Binds
 import dagger.Module
 import dev.sunnyday.postcreator.postcreator.operation.AddBackgroundFromDeviceOperation
 import dev.sunnyday.postcreator.postcreator.operation.AddBackgroundFromDeviceOperationImpl
-import dev.sunnyday.postcreator.postcreator.operation.DrawViewToFileOperation
-import dev.sunnyday.postcreator.postcreator.operation.DrawViewToFileOperationImpl
+import dev.sunnyday.postcreator.postcreator.operation.SavePostOperation
+import dev.sunnyday.postcreator.postcreator.operation.SavePostOperationImpl
 import dev.sunnyday.postcreator.postcreator.styles.FixedInMemoryTextStylesSource
 import dev.sunnyday.postcreator.postcreator.styles.TextStylesSource
 
@@ -16,7 +16,7 @@ class PostCreatorModule
 internal interface InternalPostCreatorModule {
 
     @Binds
-    fun bindDrawViewToFileOperation(impl: DrawViewToFileOperationImpl): DrawViewToFileOperation
+    fun bindDrawViewToFileOperation(impl: SavePostOperationImpl): SavePostOperation
 
     @Binds
     fun bindAddBackgroundFromDeviceOperation(impl: AddBackgroundFromDeviceOperationImpl): AddBackgroundFromDeviceOperation
