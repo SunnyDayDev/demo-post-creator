@@ -1,9 +1,11 @@
 package dev.sunnyday.postcreator.postcreatorboard.touchtracker
 
+import android.graphics.Matrix
 import android.graphics.Point
 import android.graphics.PointF
 import android.view.MotionEvent
 import dev.sunnyday.postcreator.core.common.math.MathUtil
+import dev.sunnyday.postcreator.core.common.math.VectorUtil
 import dev.sunnyday.postcreator.postcreatorboard.PostCreatorImage
 import kotlin.properties.Delegates
 
@@ -15,10 +17,13 @@ internal class ImageTouchTracker(
     private val onCompleteMoveCallback: (PointF, PostCreatorImage) -> Unit
 ) : TouchTracker {
 
-    private var anchorPoint = Point()
+    private var anchorCenter = PointF()
     private var anchorSize = Point()
-    private var anchorSizeRelativePoint = PointF()
-    private var anchorAngle = 0f
+    private var anchorPivotToCenterPoint = PointF()
+    private var anchorRotation = 0f
+
+    private val centerPivotShift = PointF()
+    private var scale = 1f
 
     private var firstPointerId: Int? = null
     private var firstStartPoint = PointF()
@@ -26,12 +31,10 @@ internal class ImageTouchTracker(
 
     private var secondPointerId: Int? = null
     private var secondActualPoint = PointF()
-
-    private var startSize = Point()
     private var startDistance = 0f
-    private var startAngle = 0f
-
-    private val sizeBuffer = Point()
+    private var startRotation = 0f
+    private var startRotationAngle = 0f
+    private var startScale = 1f
 
     private val isMultiTouch get() = secondPointerId != null
 
@@ -41,53 +44,25 @@ internal class ImageTouchTracker(
         }
     }
 
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN,
-            MotionEvent.ACTION_POINTER_DOWN -> {
-                when {
-                    firstPointerId == null -> initFirstPointer(event)
-                    secondPointerId == null -> initSecondPointer(event)
-                    else -> return true
-                }
-            }
+    private val rotateVectorBuffer = floatArrayOf(0f, 0f)
+    private val rotateMatrixBuffer = Matrix()
 
-            MotionEvent.ACTION_MOVE -> {
-                when {
-                    firstPointerId == null -> initFirstPointer(event)
-                    secondPointerId == null && event.pointerCount > 1 -> initSecondPointer(event)
-                    else -> {
-                        updateActualPoints(event)
-                        checkMoving()
+    override fun onTouchEvent(event: MotionEvent): Boolean = when (event.actionMasked) {
+        MotionEvent.ACTION_DOWN,
+        MotionEvent.ACTION_POINTER_DOWN -> onActionDown(event)
 
-                        if (isMoving) {
-                            onMoved()
-                        }
-                    }
-                }
-            }
+        MotionEvent.ACTION_MOVE -> onActionMove(event)
 
-            MotionEvent.ACTION_UP,
-            MotionEvent.ACTION_POINTER_UP -> {
-                when (event.getPointerId(event.actionIndex)) {
-                    firstPointerId -> {
-                        if (!isMoving) {
-                            onClickCallback(firstActualPoint, image)
-                        } else {
-                            onCompleteMoveCallback(firstActualPoint, image)
-                        }
+        MotionEvent.ACTION_UP,
+        MotionEvent.ACTION_POINTER_UP -> onActionUp(event)
 
-                        isMoving = false
-                        firstPointerId = null
-                        secondPointerId = null
+        else -> true
+    }
 
-                        return false
-                    }
-                    secondPointerId -> {
-                        secondPointerId = null
-                    }
-                }
-            }
+    private fun onActionDown(event: MotionEvent): Boolean {
+        when {
+            firstPointerId == null -> initFirstPointer(event)
+            secondPointerId == null -> initSecondPointer(event)
         }
 
         return true
@@ -101,10 +76,11 @@ internal class ImageTouchTracker(
         firstActualPoint.set(firstStartPoint)
 
         anchorSize.set(image.rect.width(), image.rect.height())
-        anchorPoint.set(image.rect.left, image.rect.top)
-        anchorSizeRelativePoint.set(
-            (firstStartPoint.x - image.rect.left) / image.rect.width(),
-            (firstStartPoint.y - image.rect.top) / image.rect.height())
+        anchorCenter.set(image.rect.exactCenterX(), image.rect.exactCenterY())
+        anchorRotation = image.rotation
+        anchorPivotToCenterPoint.set(
+            image.rect.exactCenterX() - firstActualPoint.x,
+            image.rect.exactCenterY() - firstActualPoint.y)
     }
 
     private fun initSecondPointer(event: MotionEvent) {
@@ -117,13 +93,29 @@ internal class ImageTouchTracker(
 
         updatePoint(pointerId, event, secondActualPoint)
 
-        anchorAngle = image.rotation
-
-        startSize.set(image.rect.width(), image.rect.height())
         startDistance = MathUtil.getDistance(firstActualPoint, secondActualPoint)
-        startAngle = MathUtil.getAngle(firstActualPoint, secondActualPoint)
+        startRotationAngle = MathUtil.getAngle(firstActualPoint, secondActualPoint)
+        startRotation = image.rotation
+        startScale = scale
 
         isMoving = true
+    }
+
+    private fun onActionMove(event: MotionEvent): Boolean {
+        when {
+            firstPointerId == null -> initFirstPointer(event)
+            secondPointerId == null && event.pointerCount > 1 -> initSecondPointer(event)
+            else -> {
+                updateActualPoints(event)
+                checkMoving()
+
+                if (isMoving) {
+                    onMoved()
+                }
+            }
+        }
+
+        return true
     }
 
     private fun updateActualPoints(event: MotionEvent) {
@@ -151,40 +143,81 @@ internal class ImageTouchTracker(
     }
 
     private fun onMoved() {
-        val size = sizeBuffer
-        size.set(image.rect.width(), image.rect.height())
-
-        val secondActualPoint = secondActualPoint
-
         if (isMultiTouch) {
-            val actualDistance = MathUtil.getDistance(firstActualPoint, secondActualPoint)
-            val sizeRatio = actualDistance / startDistance
-
-            size.set(
-                (startSize.x * sizeRatio).toInt(),
-                (startSize.y * sizeRatio).toInt())
-
-            val angle = MathUtil.getAngle(firstActualPoint, secondActualPoint)
-
-            val resultRotation = anchorAngle + angle - startAngle
-            if (resultRotation != image.rotation) {
-                image.rotation = resultRotation
-            }
+            handleMultitouch()
         }
 
         val dx = firstActualPoint.x - firstStartPoint.x
-        val dSizeX = size.x - anchorSize.x
-        val xSizeShift = dSizeX * anchorSizeRelativePoint.x
-        val left = (anchorPoint.x + dx - xSizeShift).toInt()
+        val x = (anchorCenter.x + dx + centerPivotShift.x).toInt()
 
         val dy = firstActualPoint.y - firstStartPoint.y
-        val dSizeY = size.y - anchorSize.y
-        val ySizeShift = dSizeY * anchorSizeRelativePoint.y
-        val top = (anchorPoint.y + dy - ySizeShift).toInt()
+        val y = (anchorCenter.y + dy + centerPivotShift.y).toInt()
 
-        image.rect.set(left, top, left + size.x, top + size.y)
+        val halfSizeX = (anchorSize.x * scale).toInt() / 2
+        val halfSizeY = (anchorSize.y * scale).toInt() / 2
+        image.rect.set(
+            x - halfSizeX, y - halfSizeY, x + halfSizeX, y + halfSizeY)
 
         onMoveCallback(firstActualPoint, image)
+    }
+
+    private fun handleMultitouch() {
+        handleScaling()
+        handleRotation()
+    }
+
+    private fun handleScaling() {
+        val actualDistance = MathUtil.getDistance(firstActualPoint, secondActualPoint)
+        val gestureScale = actualDistance / startDistance
+        scale = startScale * gestureScale
+    }
+
+    private fun handleRotation() {
+        val rotationAngle = MathUtil.getAngle(firstActualPoint, secondActualPoint)
+        val dGestureRotation = rotationAngle - startRotationAngle
+        val resultRotation = (startRotation + dGestureRotation) % 360
+
+        if (resultRotation == image.rotation)
+            return
+
+        image.rotation = resultRotation
+
+        val resultPivotToCenterVector = rotateVectorBuffer
+        rotateVectorBuffer[0] = scale * anchorPivotToCenterPoint.x
+        rotateVectorBuffer[1] = scale * anchorPivotToCenterPoint.y
+
+        val dRotation = resultRotation - anchorRotation
+        VectorUtil.rotate(
+            vector = resultPivotToCenterVector,
+            degrees = dRotation,
+            rotationMatrixBuffer = rotateMatrixBuffer)
+
+        centerPivotShift.set(
+            resultPivotToCenterVector[0] - anchorPivotToCenterPoint.x,
+            resultPivotToCenterVector[1] - anchorPivotToCenterPoint.y)
+    }
+
+    private fun onActionUp(event: MotionEvent): Boolean {
+        when (event.getPointerId(event.actionIndex)) {
+            firstPointerId -> {
+                if (!isMoving) {
+                    onClickCallback(firstActualPoint, image)
+                } else {
+                    onCompleteMoveCallback(firstActualPoint, image)
+                }
+
+                isMoving = false
+                firstPointerId = null
+                secondPointerId = null
+
+                return false
+            }
+            secondPointerId -> {
+                secondPointerId = null
+            }
+        }
+
+        return true
     }
 
 }

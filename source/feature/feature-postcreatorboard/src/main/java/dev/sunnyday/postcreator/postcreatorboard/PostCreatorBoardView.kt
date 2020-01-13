@@ -26,6 +26,7 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import dev.sunnyday.postcreator.core.common.android.Dimen
 import dev.sunnyday.postcreator.core.common.android.InputStreamUtil
 import dev.sunnyday.postcreator.core.common.math.MathUtil
+import dev.sunnyday.postcreator.core.common.math.RectUtil
 import dev.sunnyday.postcreator.postcreatorboard.decorations.TextDecorator
 import dev.sunnyday.postcreator.postcreatorboard.touchtracker.ImageTouchTrackerFactory
 import dev.sunnyday.postcreator.postcreatorboard.touchtracker.TouchTracker
@@ -404,28 +405,15 @@ class PostCreatorBoardView @JvmOverloads constructor(
         return getFirstNonTransparentTouchedImage(x, y, itemsUnderTouch)
     }
 
-    private fun checkIsUnderTouch(x: Int, y: Int, imageItem: ImageItem): Boolean =
-        getLocationInRotatedRect(x, y, imageItem.data.rect, -imageItem.data.rotation) != null
+    private fun checkIsUnderTouch(x: Int, y: Int, imageItem: ImageItem): Boolean {
+        val locationInRect = RectUtil.getLocationInRotatedRect(
+            x, y,
+            rect = imageItem.data.rect,
+            degrees = -imageItem.data.rotation,
+            rotationMatrixBuffer = rotationMatrixBuffer)
 
-    private fun getLocationInRotatedRect(x: Int, y: Int, rect: Rect, degrees: Float): FloatArray? {
-        val location = floatArrayOf(0f, 0f)
-        location[0] = x - rect.exactCenterX()
-        location[1] = y - rect.exactCenterY()
-
-        rotateVector(location, degrees)
-
-        location[0] = location[0] + rect.width() / 2
-        location[1] = location[1] + rect.height() / 2
-
-        return if (checkInRect(location, rect.width(), rect.height())) {
-            location
-        } else {
-            null
-        }
+        return locationInRect != null
     }
-
-    private fun checkInRect(location: FloatArray, width: Int, height: Int): Boolean =
-        location[0] >= 0 && location[0] < width && location[1] >= 0 && location[1] < height
 
     private fun getFirstNonTransparentTouchedImage(
         x: Int, y: Int, items: List<ImageItem>
@@ -448,14 +436,6 @@ class PostCreatorBoardView @JvmOverloads constructor(
     private fun checkNonTransparentTouch(x: Int, y: Int, bitmap: Bitmap): Boolean {
         val touchAreaPixels = getTouchPixels(x, y, checkTouchSize, bitmap)
         return touchAreaPixels.any { it != Color.TRANSPARENT }
-    }
-
-    private fun rotateVector(vector: FloatArray, degrees: Float) {
-        val rotationMatrix = rotationMatrixBuffer
-
-        rotationMatrix.reset()
-        rotationMatrix.setRotate(degrees, 0f, 0f)
-        rotationMatrix.mapVectors(vector)
     }
 
     private fun getTouchPixels(x: Int, y: Int, size: Int, bitmap: Bitmap): IntArray {
