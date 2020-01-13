@@ -11,6 +11,7 @@ include ':core:core-permissions'
 include ':core:core-activityforresult'
 include ':core:core-snackbarinteractor'
 include ':core:core-activitytracker'
+include ':core:core-dialoginteractor'
 include ':core:core-app'
 
 // endregion

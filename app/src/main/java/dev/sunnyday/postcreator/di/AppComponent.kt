@@ -13,6 +13,7 @@ import dev.sunnyday.postcreator.core.activityforresult.di.CoreActivityForResultM
 import dev.sunnyday.postcreator.core.activitytracker.di.CoreActivityTrackerModule
 import dev.sunnyday.postcreator.core.app.dagger.PerActivity
 import dev.sunnyday.postcreator.core.app.di.CoreAppModule
+import dev.sunnyday.postcreator.core.dialoginteractor.di.CoreDialogInteractorModule
 import dev.sunnyday.postcreator.core.permissions.di.CorePermissionsModule
 import dev.sunnyday.postcreator.core.snackbarinteractor.di.CoreSnackbarModule
 import dev.sunnyday.postcreator.domain.backgrounds.di.DomainBackgroundsModule
@@ -27,6 +28,7 @@ import javax.inject.Singleton
         CorePermissionsModule::class,
         CoreActivityForResultModule::class,
         CoreSnackbarModule::class,
+        CoreDialogInteractorModule::class,
         DomainBackgroundsModule::class,
         DomainStickersModule::class,
         AppModule::class,
