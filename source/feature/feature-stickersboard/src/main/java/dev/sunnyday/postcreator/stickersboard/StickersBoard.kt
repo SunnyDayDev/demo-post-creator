@@ -6,13 +6,18 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Rect
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.core.animation.doOnEnd
+import androidx.core.os.postDelayed
 import androidx.core.view.*
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -30,7 +35,11 @@ class StickersBoard private constructor(
 
     private val adapter = StickersBoardAdapter(onItemClick = this::onStickerSelected)
 
-    private var isDismissing = false
+    private var isAnimatingSelection = false
+    private var isShouldDelayDismiss = false
+    private var isDismissed = false
+
+    private val uiHandler = Handler(Looper.getMainLooper())
 
     private tailrec fun findParent(view: View, check: (ViewGroup) -> Boolean): ViewGroup? {
         val parent = view.parent as? ViewGroup ?: return null
@@ -75,7 +84,7 @@ class StickersBoard private constructor(
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
-        return if (isDismissing) {
+        return if (isAnimatingSelection) {
             true
         } else {
             super.dispatchTouchEvent(ev)
@@ -91,7 +100,8 @@ class StickersBoard private constructor(
             return
         }
 
-        isDismissing = true
+        isAnimatingSelection = true
+        isShouldDelayDismiss = true
 
         val rect = Rect()
         stickerView.getGlobalVisibleRect(rect)
@@ -123,16 +133,41 @@ class StickersBoard private constructor(
 
             doOnEnd {
                 callback(sticker)
-                contentRoot.post {
-                    stickerView.isInvisible = true
-                    contentRoot.post {
-                        dismiss()
-                    }
+                uiHandler.post {
+                    stickerView.isVisible = false
+
+                    isAnimatingSelection = false
+                    dismiss()
                 }
             }
 
             start()
         }
+    }
+
+    override fun dismiss() {
+        if (isActivityStopped()) {
+            super.dismiss()
+            return
+        }
+
+        if (isDismissed || isAnimatingSelection) return
+        isDismissed = true
+
+        if (isShouldDelayDismiss) {
+            uiHandler.postDelayed(50) {
+                super.dismiss()
+            }
+        } else {
+            super.dismiss()
+        }
+    }
+
+    private fun isActivityStopped(): Boolean {
+        val lifecycle = (ownerActivity as? LifecycleOwner)?.lifecycle
+            ?: return false
+
+        return !lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
     }
 
     companion object {

@@ -80,6 +80,7 @@ dependencies {
     implementation(project(PostCreator.Domain.stickers))
     implementation(project(PostCreator.Feature.postCreator))
     implementation(project(PostCreator.Feature.drawableChooser))
+    implementation(project(PostCreator.Feature.stickersBoard))
 
     testImplementation(Test.junit)
     androidTestImplementation(Test.junitExt)

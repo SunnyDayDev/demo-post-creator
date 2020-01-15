@@ -31,10 +31,12 @@ class DrawableChooser @JvmOverloads constructor(
         get() = adapter.selectedPosition
         set(value) { internalSetSelectedPosition(value, true) }
 
-    private fun internalSetSelectedPosition(position: Int, notifySelected: Boolean) {
+    private fun internalSetSelectedPosition(position: Int, notifyChanged: Boolean) {
+        if (adapter.selectedPosition == position) return
+
         adapter.selectedPosition = position
 
-        if (notifySelected) {
+        if (notifyChanged) {
             adapter.items.getOrNull(position)
                 ?.let(this::notifySelected)
         }
