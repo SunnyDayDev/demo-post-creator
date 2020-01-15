@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
 import dev.sunnyday.postcreator.core.app.rx.AppSchedulers
+import dev.sunnyday.postcreator.core.app.util.restorable
 import dev.sunnyday.postcreator.core.common.util.weak
 import dev.sunnyday.postcreator.domain.backgrounds.Background
 import dev.sunnyday.postcreator.domain.backgrounds.BackgroundsRepository
@@ -15,8 +16,6 @@ import dev.sunnyday.postcreator.postcreator.operation.ChooseStickerOperation
 import dev.sunnyday.postcreator.postcreator.operation.AddBackgroundFromDeviceOperation
 import dev.sunnyday.postcreator.postcreator.operation.SavePostOperation
 import dev.sunnyday.postcreator.postcreator.styles.TextStylesSource
-import dev.sunnyday.postcreator.postcreator.util.saveableInt
-import dev.sunnyday.postcreator.postcreator.util.saveableOptionalLong
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.subscribeBy
 
@@ -35,10 +34,10 @@ internal class PostCreatorViewModel @AssistedInject constructor(
         onSetView()
     }
 
-    private var activeTextStyleIndex: Int by saveableInt(0, savedStateHandle)
+    private var activeTextStyleIndex: Int by restorable(0, savedStateHandle)
 
     private var backgrounds: Map<Long, Background> = emptyMap()
-    private var selectedBackgroundId: Long? by saveableOptionalLong(savedStateHandle)
+    private var selectedBackgroundId: Long? by restorable(savedStateHandle)
 
     private val dispose = CompositeDisposable()
 
