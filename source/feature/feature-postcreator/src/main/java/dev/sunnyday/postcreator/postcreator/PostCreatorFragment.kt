@@ -19,27 +19,19 @@ import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.get
 import dagger.android.support.DaggerFragment
-import dev.sunnyday.postcreator.core.app.rx.AppSchedulers
 import dev.sunnyday.postcreator.core.common.android.Dimen
-import dev.sunnyday.postcreator.core.common.android.attachToLifecycle
 import dev.sunnyday.postcreator.domain.backgrounds.Background
-import dev.sunnyday.postcreator.domain.backgrounds.BackgroundsRepository
 import dev.sunnyday.postcreator.domain.backgrounds.resolver.BackgroundResolver
-import dev.sunnyday.postcreator.domain.stickers.Sticker
-import dev.sunnyday.postcreator.domain.stickers.StickersRepository
 import dev.sunnyday.postcreator.drawablechooser.DrawableChooserListener
 import dev.sunnyday.postcreator.drawablechooser.DrawableItem
-import dev.sunnyday.postcreator.postcreator.styles.TextStyleSwitcher
-import dev.sunnyday.postcreator.postcreator.viewModel.PostCreatorOperationsViewModel
-import dev.sunnyday.postcreator.postcreator.viewModel.PostCreatorViewModelFactory
+import dev.sunnyday.postcreator.postcreator.viewModel.PostCreatorViewModel
+import dev.sunnyday.postcreator.postcreator.di.factory.PostCreatorViewModelFactory
+import dev.sunnyday.postcreator.postcreator.styles.DecoratedTextStyle
+import dev.sunnyday.postcreator.postcreator.viewModel.PostCreatorViewInterface
 import dev.sunnyday.postcreator.postcreatorboard.PostCreatorBoardView
 import dev.sunnyday.postcreator.postcreatorboard.PostCreatorImage
 import dev.sunnyday.postcreator.stickersboard.StickerBoardItem
-import dev.sunnyday.postcreator.stickersboard.StickersBoard
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.rxkotlin.subscribeBy
 import kotlinx.android.synthetic.main.postcreator__fragment.*
-import java.util.ArrayList
 import javax.inject.Inject
 import kotlin.math.min
 
@@ -47,102 +39,17 @@ import kotlin.math.min
 class PostCreatorFragment : DaggerFragment() {
 
     @Inject
-    internal lateinit var backgroundsRepository: BackgroundsRepository
-
-    @Inject
-    internal lateinit var stickersRepository: StickersRepository
-
-    @Inject
     internal lateinit var backgroundsResolver: BackgroundResolver
 
     @Inject
-    internal lateinit var textStyleSwitcher: TextStyleSwitcher
+    internal lateinit var viewModelFactoryFactory: PostCreatorViewModelFactory.Factory
 
-    @Inject
-    internal lateinit var schedulers: AppSchedulers
-
-    @Inject
-    internal lateinit var viewModelFactory: PostCreatorViewModelFactory
-
-    private var backgrounds = LongSparseArray<Background>()
-    private var backgroundsChooserItems = LongSparseArray<DrawableItem>()
-    private var selectedBackgroundId: Long? = null
-
-    private val dispose = CompositeDisposable()
-
-    private val viewModel by lazy<PostCreatorOperationsViewModel> {
+    private val viewModel by lazy<PostCreatorViewModel> {
+        val viewModelFactory = viewModelFactoryFactory.create(this)
         ViewModelProvider(this, viewModelFactory).get()
     }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        setupSavedStateManaging()
-        setupBackgroundsFetching()
-    }
-
-    private fun setupSavedStateManaging() {
-        setupSavedStateManaging(
-            SAVED_STATE_FRAGMENT,
-            restoreState = { state ->
-                selectedBackgroundId = state.getLong(KEY_SELECTED_BACKGROUND_ID)
-                    .takeIf { it != -1L }
-                textStyleSwitcher.activeTextStyleIndex = state.getInt(KEY_TEXT_STYLE_INDEX)
-            },
-            saveState = {
-                putLong(KEY_SELECTED_BACKGROUND_ID, selectedBackgroundId ?: -1L)
-                putInt(KEY_TEXT_STYLE_INDEX, textStyleSwitcher.activeTextStyleIndex)
-            })
-    }
-
-    private fun setupBackgroundsFetching() {
-        backgroundsRepository.backgrounds()
-            .observeOn(schedulers.ui)
-            .subscribeBy(onNext = this::handleBackgrounds)
-            .let(dispose::add)
-    }
-
-    private fun handleBackgrounds(fetchedBackgrounds: List<Background>) {
-        backgrounds.clear()
-        fetchedBackgrounds.forEach { backgrounds[it.id] = it }
-
-        removeUnexistsDrawableItems(fetchedBackgrounds)
-        fetchedBackgrounds.forEach {
-            val item = backgroundsChooserItems[it.id] ?: chooserItemForBackground(it)
-            backgroundsChooserItems[it.id] = item
-        }
-
-        if (!fetchedBackgrounds.any { it.id == selectedBackgroundId }) {
-            selectedBackgroundId = fetchedBackgrounds.firstOrNull()?.id
-        }
-
-        applyBackgroundsToDrawableChooser()
-    }
-
-    private fun removeUnexistsDrawableItems(backgrounds: List<Background>) {
-        val existsIds = backgrounds.map { it.id }
-
-        backgroundsChooserItems.keyIterator()
-            .asSequence()
-            .filterNot(existsIds::contains)
-            .toList()
-            .forEach(backgroundsChooserItems::remove)
-    }
-
-    private fun applyBackgroundsToDrawableChooser() {
-        view ?: return
-
-        val items = backgroundsChooserItems.valueIterator().asSequence().toList()
-
-        drawableChooser.items = items
-
-        val selectedId = selectedBackgroundId
-        if (selectedId == null) {
-            drawableChooser.selectedPosition = 0
-        } else {
-            drawableChooser.selectedPosition = items.indexOf(backgroundsChooserItems[selectedId])
-        }
-    }
+    
+    private val viewInterface = ViewInterface()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -154,12 +61,26 @@ class PostCreatorFragment : DaggerFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         updateCreatorViewSize()
-        setupCreatorViewSavedStateManaging()
+        setupPostCreatorBoardViewSavedStateManaging()
         setupTextStyleSwitcher()
         setupDrawableChooser()
         setupStickersButton()
         setupSaveButton()
         setupScrollableContent()
+
+        viewModel.view = viewInterface
+    }
+
+    private fun setupPostCreatorBoardViewSavedStateManaging() {
+        savedStateRegistry.registerSavedStateProvider(SAVED_STATE__CREATOR_VIEW) {
+            Bundle().apply {
+                putParcelableArrayList(SAVED_STATE__KEY__IMAGES, ArrayList(creatorView.images))
+            }
+        }
+
+        savedStateRegistry.consumeRestoredStateForKey(SAVED_STATE__CREATOR_VIEW)
+            ?.getParcelableArrayList<PostCreatorImage>(SAVED_STATE__KEY__IMAGES)
+            ?.forEach(creatorView::addImage)
     }
 
     private fun updateCreatorViewSize() {
@@ -171,41 +92,17 @@ class PostCreatorFragment : DaggerFragment() {
         }
     }
 
-    private fun setupCreatorViewSavedStateManaging() {
-        setupSavedStateManaging(
-            SAVED_STATE_CREATOR_VIEW,
-            restoreState = {
-                it.getParcelableArrayList<PostCreatorImage>(KEY_IMAGES)
-                    ?.forEach(creatorView::addImage)
-            },
-            saveState = {
-                putParcelableArrayList(KEY_IMAGES, ArrayList(creatorView.images))
-            })
-    }
-
     private fun setupTextStyleSwitcher() {
-        textStyleSwitcher.applyStyle(creatorView)
-
         switchTextStyleButton.setOnClickListener {
-            textStyleSwitcher.applyNextStyle(creatorView)
+            viewModel.changeTextStyle()
         }
     }
 
     private fun setupDrawableChooser() {
         drawableChooser.addListener(object : DrawableChooserListener {
-            override fun onSelected(item: DrawableItem) = onBackgroundDrawableItemSelected(item)
-            override fun onAddClick() = onAddBackgroundRequested()
+            override fun onSelected(item: DrawableItem) = viewModel.onBackgroundSelected(item.tag)
+            override fun onAddClick() = viewModel.onAddBackground()
         })
-    }
-
-    private fun onBackgroundDrawableItemSelected(item: DrawableItem) {
-        val id = item.tag
-        val background = backgrounds[id] ?: return
-
-        selectedBackgroundId = id
-        creatorView.background = backgroundsResolver.resolve(background)
-
-        updateActionsStyleByBackground(background)
     }
 
     private fun updateActionsStyleByBackground(background: Background) {
@@ -219,43 +116,10 @@ class PostCreatorFragment : DaggerFragment() {
         }
     }
 
-    private fun onAddBackgroundRequested() {
-        viewModel.onAddBackground()
-    }
-
-    private fun chooserItemForBackground(background: Background): DrawableItem =
-        DrawableItem(background.id, source = {
-            backgroundsResolver.resolveIcon(background) ?: ColorDrawable(Color.TRANSPARENT)
-        })
-
     private fun setupStickersButton() {
         stickersButton.setOnClickListener {
-            showStickersBoard()
+            viewModel.chooseSticker()
         }
-    }
-
-    private fun showStickersBoard() {
-        stickersRepository.stickers()
-            .observeOn(schedulers.ui)
-            .subscribeBy(onSuccess = this::showStickersBoard)
-            .let(dispose::add)
-    }
-
-    private fun showStickersBoard(stickers: List<Sticker>) {
-        val context = context ?: return
-
-        val stickerBoardItems = stickers.map { StickerBoardItem(it.sourceUri) }
-        val stickerRect = getNewStickerRect()
-
-        val stickersBoard = StickersBoard.show(
-            context, stickerBoardItems,
-            stickerRectProvider = { getStickerRectInWindow(stickerRect) },
-            callback = {
-                val postImage = PostCreatorImage(it.uri, stickerRect)
-                creatorView.addImage(postImage)
-            })
-
-        stickersBoard.attachToLifecycle(lifecycle)
     }
 
     private fun getNewStickerRect(): Rect {
@@ -342,37 +206,78 @@ class PostCreatorFragment : DaggerFragment() {
     }
 
     override fun onDestroyView() {
+        viewModel.view = null
+
         super.onDestroyView()
-        savedStateRegistry.unregisterSavedStateProvider(SAVED_STATE_CREATOR_VIEW)
+
+        savedStateRegistry.unregisterSavedStateProvider(SAVED_STATE__CREATOR_VIEW)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        dispose.clear()
-    }
+    internal inner class ViewInterface: PostCreatorViewInterface {
 
-    private fun setupSavedStateManaging(
-        name: String,
-        restoreState: (Bundle) -> Unit,
-        saveState: Bundle.() -> Unit
-    ) {
-        savedStateRegistry.apply {
-            consumeRestoredStateForKey(name)?.let(restoreState)
-            registerSavedStateProvider(name) {
-                Bundle().apply(saveState)
-            }
+        private val backgroundsChooserItems = LongSparseArray<DrawableItem>()
+        
+        override fun applyTextStyle(style: DecoratedTextStyle) {
+            creatorView.textColor = style.textColor
+            creatorView.setTextDecorators(style.decorators)
         }
+
+        override fun getResultStickerBoardItemRect(): Rect {
+            val stickerRect = getNewStickerRect()
+            return getStickerRectInWindow(stickerRect)
+        }
+
+        override fun setSelectedBackground(background: Background) {
+            creatorView.background = backgroundsResolver.resolve(background)
+            updateActionsStyleByBackground(background)
+
+            val selectedPosition = backgroundsChooserItems[background.id]
+                ?.let(backgroundsChooserItems::indexOfValue)
+                ?: -1
+
+            drawableChooser.selectedPosition = selectedPosition
+        }
+
+        override fun setAvailableBackgrounds(backgrounds: List<Background>) {
+            removeUnexistsDrawableItems(backgrounds)
+            backgrounds.forEach {
+                val item = backgroundsChooserItems[it.id] ?: chooserItemForBackground(it)
+                backgroundsChooserItems[it.id] = item
+            }
+
+            drawableChooser.items = backgroundsChooserItems
+                .valueIterator()
+                .asSequence()
+                .toList()
+        }
+
+        private fun removeUnexistsDrawableItems(backgrounds: List<Background>) {
+            val existsIds = backgrounds.map { it.id }
+
+            backgroundsChooserItems.keyIterator()
+                .asSequence()
+                .filterNot(existsIds::contains)
+                .toList()
+                .forEach(backgroundsChooserItems::remove)
+        }
+
+        private fun chooserItemForBackground(background: Background): DrawableItem =
+            DrawableItem(background.id, source = {
+                backgroundsResolver.resolveIcon(background) ?: ColorDrawable(Color.TRANSPARENT)
+            })
+
+        override fun onStickerBoardItemSelected(item: StickerBoardItem) {
+            val stickerRect = getNewStickerRect()
+            val postImage = PostCreatorImage(item.uri, stickerRect)
+            creatorView.addImage(postImage)
+        }
+        
     }
 
     companion object {
 
-        private const val SAVED_STATE_CREATOR_VIEW = "postCreatorView"
-        private const val SAVED_STATE_FRAGMENT = "postCreatorFragment"
-
-
-        private const val KEY_IMAGES = "images"
-        private const val KEY_SELECTED_BACKGROUND_ID = "selectedBackgroundId"
-        private const val KEY_TEXT_STYLE_INDEX = "textStyleIndex"
+        private const val SAVED_STATE__CREATOR_VIEW = "creatorView"
+        private const val SAVED_STATE__KEY__IMAGES = "images"
 
     }
 

@@ -18,15 +18,15 @@ internal class FixedInMemoryTextStylesSource @Inject constructor(
     private val textStyles = listOf(
         DecoratedTextStyle(
             textColor = context.compat.getColor(R.color.textDark),
-            decorations = emptyList()
+            decorators = emptyList()
         ),
         DecoratedTextStyle(
             textColor = context.compat.getColor(R.color.textDark),
-            decorations = listOf(roundedWhiteTextDecorator())
+            decorators = listOf(roundedWhiteTextDecorator())
         ),
         DecoratedTextStyle(
             textColor = context.compat.getColor(R.color.textLight),
-            decorations = listOf(roundedSemiWhiteTextDecorator())
+            decorators = listOf(roundedSemiWhiteTextDecorator())
         )
     )
 
